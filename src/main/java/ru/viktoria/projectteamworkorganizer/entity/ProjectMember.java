@@ -23,8 +23,9 @@ public class ProjectMember {
     @JoinColumn(name = "user_id")
     private User user;
 
-    @Column(name = "team_role", length = 100)
-    private String teamRole;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "role_id", nullable = false)
+    private Role role;
 
     @Column(name = "joined_at", nullable = false, updatable = false)
     private LocalDateTime joinedAt = LocalDateTime.now();
@@ -39,10 +40,6 @@ public class ProjectMember {
 
     public ProjectMemberId getId() {
         return id;
-    }
-
-    public String getTeamRole() {
-        return teamRole;
     }
 
     public User getUser() {
@@ -61,11 +58,15 @@ public class ProjectMember {
         this.joinedAt = joinedAt;
     }
 
-    public void setTeamRole(String teamRole) {
-        this.teamRole = teamRole;
-    }
-
     public void setUser(User user) {
         this.user = user;
+    }
+
+    public Role getRole() {
+        return role;
+    }
+
+    public void setRole(Role role) {
+        this.role = role;
     }
 }

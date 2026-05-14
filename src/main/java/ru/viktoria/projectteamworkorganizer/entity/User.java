@@ -3,8 +3,6 @@ package ru.viktoria.projectteamworkorganizer.entity;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Set;
 
 @Entity
 @Table(name = "users")
@@ -30,13 +28,9 @@ public class User {
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
-    @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(
-            name = "users_roles",
-            joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "role_id")
-    )
-    private Set<Role> roles =  new HashSet<>();
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "system_role_id")
+    private Role systemRole;
 
     public Integer getId() {
         return id;
@@ -86,11 +80,11 @@ public class User {
         this.createdAt = createdAt;
     }
 
-    public Set<Role> getRoles() {
-        return roles;
+    public Role getSystemRole() {
+        return systemRole;
     }
 
-    public void setRoles(Set<Role> roles) {
-        this.roles = roles;
+    public void setSystemRole(Role systemRole) {
+        this.systemRole = systemRole;
     }
 }
