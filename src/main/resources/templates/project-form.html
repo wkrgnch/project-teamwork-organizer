@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Создание проекта</title>
+</head>
+<body>
+
+<h1>Создание проекта</h1>
+
+<form th:action="@{/projects}" th:object="${projectForm}" method="post">
+
+    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+
+    <div>
+        <label for="name">Название проекта</label><br>
+        <input id="name" type="text" th:field="*{name}">
+        <div th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></div>
+    </div>
+
+    <br>
+
+    <div>
+        <label for="description">Описание</label><br>
+        <textarea id="description" th:field="*{description}"></textarea>
+    </div>
+
+    <br>
+
+    <div>
+        <label for="publicDescription">Публичное описание</label><br>
+        <textarea id="publicDescription" th:field="*{publicDescription}"></textarea>
+    </div>
+
+    <br>
+
+    <div>
+        <label for="methodology">Методология</label><br>
+        <select id="methodology" th:field="*{methodology}">
+            <option value="">Выберите методологию</option>
+            <option th:each="methodology : ${methodologies}"
+                    th:value="${methodology}"
+                    th:text="${methodology}">
+                SCRUM
+            </option>
+        </select>
+        <div th:if="${#fields.hasErrors('methodology')}" th:errors="*{methodology}"></div>
+    </div>
+
+    <br>
+
+    <div>
+        <label for="startDate">Дата начала</label><br>
+        <input id="startDate" type="date" th:field="*{startDate}">
+        <div th:if="${#fields.hasErrors('startDate')}" th:errors="*{startDate}"></div>
+    </div>
+
+    <br>
+
+    <div>
+        <label for="endDate">Дата окончания</label><br>
+        <input id="endDate" type="date" th:field="*{endDate}">
+    </div>
+
+    <br>
+
+    <div>
+        <label>
+            <input type="checkbox" th:field="*{publicProject}">
+            Публичный проект
+        </label>
+    </div>
+
+    <br>
+
+    <button type="submit">Создать проект</button>
+</form>
+
+<p>
+    <a th:href="@{/projects}">Назад к проектам</a>
+</p>
+
+</body>
+</html>
