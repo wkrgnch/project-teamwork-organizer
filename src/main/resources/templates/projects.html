@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Проекты</title>
+</head>
+<body>
+
+<h1>Проекты</h1>
+
+<p>
+    <a th:href="@{/work-types}">Типы работ</a>
+</p>
+
+<div th:if="${projects.isEmpty()}">
+    <p>Проекты пока не созданы.</p>
+</div>
+
+<table border="1" th:if="${!projects.isEmpty()}">
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Название</th>
+        <th>Методология</th>
+        <th>Статус</th>
+        <th>Дата начала</th>
+        <th>Дата окончания</th>
+        <th>Публичный</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    <tr th:each="project : ${projects}">
+        <td th:text="${project.id}">1</td>
+        <td th:text="${project.name}">Название проекта</td>
+        <td th:text="${project.methodology}">SCRUM</td>
+        <td th:text="${project.status}">ACTIVE</td>
+        <td th:text="${project.startDate}">2026-05-14</td>
+        <td th:text="${project.endDate}">2026-06-14</td>
+        <td th:text="${project.publicProject ? 'Да' : 'Нет'}">Нет</td>
+    </tr>
+    </tbody>
+</table>
+
+</body>
+</html>
