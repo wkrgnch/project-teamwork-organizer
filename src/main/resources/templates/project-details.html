@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${project.name}">Проект</title>
+</head>
+<body>
+
+<h1 th:text="${project.name}">Название проекта</h1>
+
+<p>
+    <a th:href="@{/projects}">Назад к проектам</a>
+</p>
+
+<h2>Основная информация</h2>
+
+<table border="1">
+    <tr>
+        <th>ID</th>
+        <td th:text="${project.id}">1</td>
+    </tr>
+    <tr>
+        <th>Методология</th>
+        <td th:text="${project.methodology}">SCRUM</td>
+    </tr>
+    <tr>
+        <th>Статус</th>
+        <td th:text="${project.status}">PLANNED</td>
+    </tr>
+    <tr>
+        <th>Дата начала</th>
+        <td th:text="${project.startDate}">2026-05-14</td>
+    </tr>
+    <tr>
+        <th>Дата окончания</th>
+        <td th:text="${project.endDate}">2026-06-14</td>
+    </tr>
+    <tr>
+        <th>Публичный</th>
+        <td th:text="${project.publicProject ? 'Да' : 'Нет'}">Нет</td>
+    </tr>
+</table>
+
+<h2>Описание</h2>
+
+<p th:text="${project.description}">Описание проекта</p>
+
+<h2>Стадии проекта</h2>
+
+<table border="1">
+    <thead>
+    <tr>
+        <th>Название</th>
+        <th>Описание</th>
+        <th>Статус</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    <tr th:each="stage : ${stages}">
+        <td th:text="${stage.name}">Название стадии</td>
+        <td th:text="${stage.description}">Описание стадии</td>
+        <td th:text="${stage.status}">PLANNED</td>
+    </tr>
+    </tbody>
+</table>
+
+<div th:if="${project.methodology.name() == 'SCRUM'}">
+    <h2>Спринты</h2>
+
+    <div th:if="${sprints.isEmpty()}">
+        <p>Спринты пока не созданы.</p>
+    </div>
+
+    <table border="1" th:if="${!sprints.isEmpty()}">
+        <thead>
+        <tr>
+            <th>Название</th>
+            <th>Цель</th>
+            <th>Дата начала</th>
+            <th>Дата окончания</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        <tr th:each="sprint : ${sprints}">
+            <td th:text="${sprint.name}">Спринт 1</td>
+            <td th:text="${sprint.goal}">Цель спринта</td>
+            <td th:text="${sprint.startDate}">2026-05-14</td>
+            <td th:text="${sprint.endDate}">2026-05-27</td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+</body>
+</html>

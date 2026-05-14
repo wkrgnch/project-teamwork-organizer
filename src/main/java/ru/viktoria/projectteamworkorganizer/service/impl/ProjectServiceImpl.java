@@ -16,6 +16,7 @@ import ru.viktoria.projectteamworkorganizer.service.ProjectService;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class ProjectServiceImpl implements ProjectService {
@@ -109,5 +110,20 @@ public class ProjectServiceImpl implements ProjectService {
         sprint.setGoal("Первый спринт проекта");
 
         sprintRepository.save(sprint);
+    }
+
+    @Override
+    public Optional<Project> findById(Integer id) {
+        return projectRepository.findById(id);
+    }
+
+    @Override
+    public List<ProjectStage> findStagesByProjectId(Integer projectId) {
+        return projectStageRepository.findByProjectIdOrderByOrderNumberAsc(projectId);
+    }
+
+    @Override
+    public List<Sprint> findSprintsByProjectId(Integer projectId) {
+        return sprintRepository.findByProjectIdOrderByStartDateAsc(projectId);
     }
 }

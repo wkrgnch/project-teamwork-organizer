@@ -30,6 +30,7 @@
         <th>Дата начала</th>
         <th>Дата окончания</th>
         <th>Публичный</th>
+        <th>Действия</th>
     </tr>
     </thead>
 
@@ -42,6 +43,9 @@
         <td th:text="${project.startDate}">2026-05-14</td>
         <td th:text="${project.endDate}">2026-06-14</td>
         <td th:text="${project.publicProject ? 'Да' : 'Нет'}">Нет</td>
+        <td>
+            <a th:href="@{/projects/{id}(id=${project.id})}">Открыть</a>
+        </td>
     </tr>
     </tbody>
 </table>
