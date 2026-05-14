@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Типы работ</title>
+</head>
+
+<body>
+<h1>Типы работ</h1>
+<table>
+    <thead>
+    <tr>
+        <td>ID</td>
+        <td>Тип</td>
+        <td>Описание</td>
+    </tr>
+    </thead>
+
+    <tbody>
+    <tr th:each="workType : ${workTypes}">
+        <td th:text="${workType.id}">1</td>
+        <td th:text="${workType.type}">Тип работы</td>
+        <td th:text="${workType.description}">Описание</td>
+    </tr>
+    </tbody>
+</table>
+</body>
+</html>
