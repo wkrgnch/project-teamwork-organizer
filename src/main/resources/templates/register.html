@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Регистрация</title>
+</head>
+<body>
+
+<h1>Регистрация</h1>
+
+<form th:action="@{/register}" th:object="${userForm}" method="post">
+
+    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+
+    <div>
+        <label for="fullName">ФИО</label><br>
+        <input id="fullName" type="text" th:field="*{fullName}">
+        <div th:if="${#fields.hasErrors('fullName')}" th:errors="*{fullName}"></div>
+    </div>
+
+    <br>
+
+    <div>
+        <label for="email">Email</label><br>
+        <input id="email" type="email" th:field="*{email}">
+        <div th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></div>
+    </div>
+
+    <br>
+
+    <div>
+        <label for="username">Логин</label><br>
+        <input id="username" type="text" th:field="*{username}">
+        <div th:if="${#fields.hasErrors('username')}" th:errors="*{username}"></div>
+    </div>
+
+    <br>
+
+    <div>
+        <label for="password">Пароль</label><br>
+        <input id="password" type="password" th:field="*{password}">
+        <div th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></div>
+    </div>
+
+    <br>
+
+    <button type="submit">Зарегистрироваться</button>
+</form>
+
+<p>
+    Уже есть аккаунт?
+    <a th:href="@{/login}">Войти</a>
+</p>
+
+</body>
+</html>
