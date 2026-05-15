@@ -159,4 +159,24 @@ public class ProjectController {
 
         return roles;
     }
+
+    @GetMapping("/projects/{id}/board")
+    public String showProjectBoard(@PathVariable Integer id,
+                                   Model model,
+                                   Principal principal) {
+        Optional<Project> projectOptional = projectService.findById(id);
+
+        if (projectOptional.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Проект не найден");
+        }
+
+        Project project = projectOptional.get();
+
+        model.addAttribute("project", project);
+        model.addAttribute("stages", projectService.findStagesByProjectId(id));
+        model.addAttribute("tasksByStage", taskService.findTasksByStageForProject(id));
+        model.addAttribute("canManageProject", projectService.canManageProject(id, principal.getName()));
+
+        return "project-board";
+    }
 }

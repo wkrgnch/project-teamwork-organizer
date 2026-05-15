@@ -3,193 +3,241 @@
 <head>
     <meta charset="UTF-8">
     <title th:text="${project.name}">Проект</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/app.css}">
 </head>
 <body>
 
-<h1 th:text="${project.name}">Название проекта</h1>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
 
-<p>
-    <a th:href="@{/projects}">Назад к проектам</a>
-</p>
+<main class="container py-4">
+    <div class="page-card mb-4">
+        <div class="d-flex justify-content-between align-items-start gap-3">
+            <div>
+                <h1 class="page-title mb-2" th:text="${project.name}">Название проекта</h1>
+                <p class="text-muted mb-0" th:text="${project.description}">Описание проекта</p>
+            </div>
 
-<h2>Основная информация</h2>
+            <div class="d-flex gap-2 flex-wrap justify-content-end">
+                <a class="btn btn-outline-secondary" th:href="@{/projects}">
+                    Назад
+                </a>
 
-<table border="1">
-    <tr>
-        <th>ID</th>
-        <td th:text="${project.id}">1</td>
-    </tr>
-    <tr>
-        <th>Методология</th>
-        <td th:text="${project.methodology}">SCRUM</td>
-    </tr>
-    <tr>
-        <th>Статус</th>
-        <td th:text="${project.status}">PLANNED</td>
-    </tr>
-    <tr>
-        <th>Дата начала</th>
-        <td th:text="${project.startDate}">2026-05-14</td>
-    </tr>
-    <tr>
-        <th>Дата окончания</th>
-        <td th:text="${project.endDate}">2026-06-14</td>
-    </tr>
-    <tr>
-        <th>Публичный</th>
-        <td th:text="${project.publicProject ? 'Да' : 'Нет'}">Нет</td>
-    </tr>
-</table>
+                <a class="btn btn-primary" th:href="@{/projects/{id}/board(id=${project.id})}">
+                    Открыть доску
+                </a>
 
-<h2>Участники проекта</h2>
-
-<p th:if="${canManageProject}">
-    <a th:href="@{/projects/{id}/members/new(id=${project.id})}">
-        Добавить участника
-    </a>
-</p>
-
-<div th:if="${members.isEmpty()}">
-    <p>Участники пока не добавлены.</p>
-</div>
-
-<table border="1" th:if="${!members.isEmpty()}">
-    <thead>
-    <tr>
-        <th>ФИО</th>
-        <th>Логин</th>
-        <th>Роль в проекте</th>
-        <th>Дата добавления</th>
-        <th>Действия</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    <tr th:each="member : ${members}">
-        <td th:text="${member.user.fullName}">ФИО</td>
-        <td th:text="${member.user.username}">username</td>
-        <td>
-            <span th:each="role, stat : ${member.roles}">
-                <span th:text="${role.type}">WORK_EXECUTOR</span>
-                <span th:if="${!stat.last}">, </span>
-            </span>
-        </td>
-        <td th:text="${#temporals.format(member.joinedAt, 'dd.MM.yyyy HH:mm')}">
-            15.05.2026 01:05
-        </td>
-        <td>
-            <form th:if="${canManageProject and member.user.username != currentUsername}"
-                  th:action="@{/projects/{projectId}/members/{userId}/delete(projectId=${project.id}, userId=${member.user.id})}"
-                  method="post">
-                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                <button type="submit">Удалить</button>
-            </form>
-        </td>
-    </tr>
-    </tbody>
-</table>
-
-
-<h2>Описание</h2>
-
-<p th:text="${project.description}">Описание проекта</p>
-
-<p th:if="${canManageProject}">
-    <a th:href="@{/projects/{id}/tasks/new(id=${project.id})}">
-        Создать задачу
-    </a>
-</p>
-
-<h2>Задачи проекта</h2>
-
-<div th:if="${tasks.isEmpty()}">
-    <p>Задачи пока не созданы.</p>
-</div>
-
-<table border="1" th:if="${!tasks.isEmpty()}">
-    <thead>
-    <tr>
-        <th>Название</th>
-        <th>Стадия</th>
-        <th>Спринт</th>
-        <th>Тип работы</th>
-        <th>Приоритет</th>
-        <th>Статус</th>
-        <th>Исполнитель</th>
-        <th>Дедлайн</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    <tr th:each="task : ${tasks}">
-        <td th:text="${task.title}">Название задачи</td>
-        <td th:text="${task.stage != null ? task.stage.name : 'Не указана'}">Стадия</td>
-        <td th:text="${task.sprint != null ? task.sprint.name : 'Без спринта'}">Спринт</td>
-        <td th:text="${task.workType.type}">Тип работы</td>
-        <td th:text="${task.priority}">MEDIUM</td>
-        <td th:text="${task.status}">TO_DO</td>
-        <td th:text="${task.assignee != null ? task.assignee.fullName : 'Не назначен'}">Исполнитель</td>
-        <td th:text="${task.deadline != null ? #temporals.format(task.deadline, 'dd.MM.yyyy') : 'Не указан'}">
-            15.05.2026
-        </td>
-    </tr>
-    </tbody>
-</table>
-
-<h2>Стадии проекта</h2>
-
-<table border="1">
-    <thead>
-    <tr>
-        <th>Название</th>
-        <th>Описание</th>
-        <th>Статус</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    <tr th:each="stage : ${stages}">
-        <td th:text="${stage.name}">Название стадии</td>
-        <td th:text="${stage.description}">Описание стадии</td>
-        <td th:text="${stage.status}">PLANNED</td>
-    </tr>
-    </tbody>
-</table>
-
-<div th:if="${project.methodology.name() == 'SCRUM'}">
-    <h2>Спринты</h2>
-
-    <div th:if="${sprints.isEmpty()}">
-        <p>Спринты пока не созданы.</p>
+                <a class="btn btn-success"
+                   th:if="${canManageProject}"
+                   th:href="@{/projects/{id}/tasks/new(id=${project.id})}">
+                    Создать задачу
+                </a>
+            </div>
+        </div>
     </div>
 
-    <table border="1" th:if="${!sprints.isEmpty()}">
-        <thead>
-        <tr>
-            <th>Название</th>
-            <th>Цель</th>
-            <th>Дата начала</th>
-            <th>Дата окончания</th>
-        </tr>
-        </thead>
+    <div class="row g-4">
+        <div class="col-lg-5">
+            <div class="page-card h-100">
+                <h2 class="h4 mb-3">Основная информация</h2>
 
-        <tbody>
-        <tr th:each="sprint : ${sprints}">
-            <td th:text="${sprint.name}">Спринт 1</td>
-            <td th:text="${sprint.goal}">Цель спринта</td>
-            <td th:text="${#temporals.format(sprint.startDate, 'dd.MM.yyyy')}">
-                15.05.2026
-            </td>
-            <td th:text="${#temporals.format(sprint.endDate, 'dd.MM.yyyy')}">
-                28.05.2026
-            </td>
-        </tr>
-        </tbody>
-    </table>
-</div>
-<form th:action="@{/logout}" method="post">
-    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-    <button type="submit">Выйти</button>
-</form>
+                <table class="table table-sm">
+                    <tbody>
+                    <tr>
+                        <th>ID</th>
+                        <td th:text="${project.id}">1</td>
+                    </tr>
+                    <tr>
+                        <th>Методология</th>
+                        <td>
+                            <span class="badge text-bg-secondary" th:text="${project.methodology}">SCRUM</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Статус</th>
+                        <td th:text="${project.status}">PLANNED</td>
+                    </tr>
+                    <tr>
+                        <th>Дата начала</th>
+                        <td th:text="${#temporals.format(project.startDate, 'dd.MM.yyyy')}">14.05.2026</td>
+                    </tr>
+                    <tr>
+                        <th>Дата окончания</th>
+                        <td th:text="${project.endDate != null ? #temporals.format(project.endDate, 'dd.MM.yyyy') : 'Не указана'}">
+                            Не указана
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Публичный</th>
+                        <td th:text="${project.publicProject ? 'Да' : 'Нет'}">Нет</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="col-lg-7">
+            <div class="page-card h-100">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h2 class="h4 mb-0">Участники проекта</h2>
+
+                    <a class="btn btn-sm btn-success"
+                       th:if="${canManageProject}"
+                       th:href="@{/projects/{id}/members/new(id=${project.id})}">
+                        Добавить участника
+                    </a>
+                </div>
+
+                <div th:if="${members.isEmpty()}" class="alert alert-info">
+                    Участники пока не добавлены.
+                </div>
+
+                <div class="table-responsive" th:if="${!members.isEmpty()}">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                        <tr>
+                            <th>ФИО</th>
+                            <th>Логин</th>
+                            <th>Роли</th>
+                            <th>Дата добавления</th>
+                            <th>Действия</th>
+                        </tr>
+                        </thead>
+
+                        <tbody>
+                        <tr th:each="member : ${members}">
+                            <td th:text="${member.user.fullName}">ФИО</td>
+                            <td th:text="${member.user.username}">username</td>
+                            <td>
+                                <span th:each="role, stat : ${member.roles}">
+                                    <span class="badge text-bg-light border" th:text="${role.type}">WORK_EXECUTOR</span>
+                                </span>
+                            </td>
+                            <td th:text="${#temporals.format(member.joinedAt, 'dd.MM.yyyy HH:mm')}">
+                                15.05.2026 01:05
+                            </td>
+                            <td>
+                                <form th:if="${canManageProject and member.user.username != currentUsername}"
+                                      th:action="@{/projects/{projectId}/members/{userId}/delete(projectId=${project.id}, userId=${member.user.id})}"
+                                      method="post">
+                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                                        Удалить
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="page-card mt-4">
+        <h2 class="h4 mb-3">Задачи проекта</h2>
+
+        <div th:if="${tasks.isEmpty()}" class="alert alert-info">
+            Задачи пока не созданы.
+        </div>
+
+        <div class="table-responsive" th:if="${!tasks.isEmpty()}">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                <tr>
+                    <th>Название</th>
+                    <th>Стадия</th>
+                    <th th:if="${project.methodology.name() == 'SCRUM'}">Спринт</th>
+                    <th>Тип работы</th>
+                    <th>Приоритет</th>
+                    <th>Статус</th>
+                    <th>Исполнитель</th>
+                    <th>Дедлайн</th>
+                </tr>
+                </thead>
+
+                <tbody>
+                <tr th:each="task : ${tasks}">
+                    <td class="fw-semibold" th:text="${task.title}">Название задачи</td>
+                    <td th:text="${task.stage != null ? task.stage.name : 'Не указана'}">Стадия</td>
+                    <td th:if="${project.methodology.name() == 'SCRUM'}"
+                        th:text="${task.sprint != null ? task.sprint.name : 'Без спринта'}">
+                        Спринт
+                    </td>
+                    <td th:text="${task.workType.type}">Тип работы</td>
+                    <td>
+                        <span class="badge text-bg-warning" th:text="${task.priority}">MEDIUM</span>
+                    </td>
+                    <td th:text="${task.status}">TO_DO</td>
+                    <td th:text="${task.assignee != null ? task.assignee.fullName : 'Не назначен'}">Исполнитель</td>
+                    <td th:text="${task.deadline != null ? #temporals.format(task.deadline, 'dd.MM.yyyy') : 'Не указан'}">
+                        15.05.2026
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="row g-4 mt-1">
+        <div class="col-lg-6">
+            <div class="page-card h-100">
+                <h2 class="h4 mb-3">Стадии проекта</h2>
+
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                        <tr>
+                            <th>Название</th>
+                            <th>Описание</th>
+                        </tr>
+                        </thead>
+
+                        <tbody>
+                        <tr th:each="stage : ${stages}">
+                            <td th:text="${stage.name}">Название стадии</td>
+                            <td th:text="${stage.description}">Описание стадии</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6" th:if="${project.methodology.name() == 'SCRUM'}">
+            <div class="page-card h-100">
+                <h2 class="h4 mb-3">Спринты</h2>
+
+                <div th:if="${sprints.isEmpty()}" class="alert alert-info">
+                    Спринты пока не созданы.
+                </div>
+
+                <div class="table-responsive" th:if="${!sprints.isEmpty()}">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                        <tr>
+                            <th>Название</th>
+                            <th>Цель</th>
+                            <th>Дата начала</th>
+                            <th>Дата окончания</th>
+                        </tr>
+                        </thead>
+
+                        <tbody>
+                        <tr th:each="sprint : ${sprints}">
+                            <td th:text="${sprint.name}">Спринт 1</td>
+                            <td th:text="${sprint.goal}">Цель спринта</td>
+                            <td th:text="${#temporals.format(sprint.startDate, 'dd.MM.yyyy')}">15.05.2026</td>
+                            <td th:text="${#temporals.format(sprint.endDate, 'dd.MM.yyyy')}">28.05.2026</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
 </body>
 </html>

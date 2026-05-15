@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<nav th:fragment="navbar" class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container">
+        <a class="navbar-brand fw-bold" th:href="@{/projects}">
+            Project Teamwork Organizer
+        </a>
+
+        <div class="d-flex gap-2 align-items-center">
+            <a class="btn btn-outline-light btn-sm" th:href="@{/projects}">
+                Проекты
+            </a>
+
+
+            <form th:action="@{/logout}" method="post" class="m-0">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                <button type="submit" class="btn btn-danger btn-sm">
+                    Выйти
+                </button>
+            </form>
+        </div>
+    </div>
+</nav>
+
+</body>
+</html>

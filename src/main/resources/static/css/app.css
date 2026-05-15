@@ -1,0 +1,80 @@
+body {
+    background-color: #f5f7fb;
+}
+
+.page-card {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 6px 20px rgba(15, 23, 42, 0.08);
+}
+
+.page-title {
+    font-weight: 700;
+    margin-bottom: 20px;
+}
+
+.form-container {
+    max-width: 760px;
+    margin: 0 auto;
+}
+
+.auth-container {
+    max-width: 460px;
+    margin: 60px auto;
+}
+
+.board {
+    display: flex;
+    gap: 16px;
+    overflow-x: auto;
+    padding-bottom: 16px;
+}
+
+.stage-column {
+    background: #edf1f7;
+    border-radius: 16px;
+    padding: 16px;
+    min-width: 300px;
+    max-width: 360px;
+    flex: 1;
+}
+
+.stage-title {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 16px;
+}
+
+.task-card {
+    background: #ffffff;
+    border-radius: 14px;
+    padding: 14px;
+    margin-bottom: 14px;
+    box-shadow: 0 3px 10px rgba(15, 23, 42, 0.12);
+}
+
+.task-title {
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.task-meta {
+    font-size: 14px;
+    color: #475569;
+    margin-top: 4px;
+}
+
+.empty-column {
+    color: #64748b;
+    font-size: 14px;
+}
+
+.table th {
+    white-space: nowrap;
+}
+
+.badge-soft {
+    background-color: #eef2ff;
+    color: #3730a3;
+}

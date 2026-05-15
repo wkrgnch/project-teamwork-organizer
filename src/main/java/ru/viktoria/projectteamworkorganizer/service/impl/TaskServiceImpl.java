@@ -11,8 +11,7 @@ import ru.viktoria.projectteamworkorganizer.repository.*;
 import ru.viktoria.projectteamworkorganizer.service.TaskService;
 
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 public class TaskServiceImpl implements TaskService {
@@ -151,5 +150,64 @@ public class TaskServiceImpl implements TaskService {
         );
 
         return count > 0;
+    }
+
+    @Override
+    public Map<Integer, List<Task>> findTasksByStageForProject(Integer projectId) {
+        List<Task> tasks = taskRepository.findTasksByProjectId(projectId);
+
+        Map<Integer, List<Task>> tasksByStage = new HashMap<>();
+
+        for (Task task : tasks) {
+            if (task.getStage() != null) {
+                Integer stageId = task.getStage().getId();
+
+                if (!tasksByStage.containsKey(stageId)) {
+                    tasksByStage.put(stageId, new ArrayList<>());
+                }
+
+                tasksByStage.get(stageId).add(task);
+            }
+        }
+
+        return tasksByStage;
+    }
+
+    @Override
+    @Transactional
+    public Integer changeStage(Integer taskId, Integer stageId, String currentUsername) {
+        Optional<Task> taskOptional = taskRepository.findById(taskId);
+
+        if (taskOptional.isEmpty()) {
+            throw new IllegalStateException("Задача не найдена");
+        }
+
+        Task task = taskOptional.get();
+        Integer projectId = task.getProject().getId();
+
+        boolean canManage = canCreateTask(projectId, currentUsername);
+
+        if (!canManage) {
+            throw new IllegalStateException("Нет прав для изменения стадии задачи");
+        }
+
+        Optional<ProjectStage> stageOptional = projectStageRepository.findById(stageId);
+
+        if (stageOptional.isEmpty()) {
+            throw new IllegalStateException("Стадия не найдена");
+        }
+
+        ProjectStage newStage = stageOptional.get();
+
+        if (!newStage.getProject().getId().equals(projectId)) {
+            throw new IllegalStateException("Выбранная стадия не относится к этому проекту");
+        }
+
+        task.setStage(newStage);
+        task.setUpdatedAt(LocalDateTime.now());
+
+        taskRepository.save(task);
+
+        return projectId;
     }
 }
