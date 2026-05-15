@@ -94,6 +94,48 @@
 
 <p th:text="${project.description}">Описание проекта</p>
 
+<p th:if="${canManageProject}">
+    <a th:href="@{/projects/{id}/tasks/new(id=${project.id})}">
+        Создать задачу
+    </a>
+</p>
+
+<h2>Задачи проекта</h2>
+
+<div th:if="${tasks.isEmpty()}">
+    <p>Задачи пока не созданы.</p>
+</div>
+
+<table border="1" th:if="${!tasks.isEmpty()}">
+    <thead>
+    <tr>
+        <th>Название</th>
+        <th>Стадия</th>
+        <th>Спринт</th>
+        <th>Тип работы</th>
+        <th>Приоритет</th>
+        <th>Статус</th>
+        <th>Исполнитель</th>
+        <th>Дедлайн</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    <tr th:each="task : ${tasks}">
+        <td th:text="${task.title}">Название задачи</td>
+        <td th:text="${task.stage != null ? task.stage.name : 'Не указана'}">Стадия</td>
+        <td th:text="${task.sprint != null ? task.sprint.name : 'Без спринта'}">Спринт</td>
+        <td th:text="${task.workType.type}">Тип работы</td>
+        <td th:text="${task.priority}">MEDIUM</td>
+        <td th:text="${task.status}">TO_DO</td>
+        <td th:text="${task.assignee != null ? task.assignee.fullName : 'Не назначен'}">Исполнитель</td>
+        <td th:text="${task.deadline != null ? #temporals.format(task.deadline, 'dd.MM.yyyy') : 'Не указан'}">
+            15.05.2026
+        </td>
+    </tr>
+    </tbody>
+</table>
+
 <h2>Стадии проекта</h2>
 
 <table border="1">
