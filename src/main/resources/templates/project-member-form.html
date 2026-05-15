@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Добавление участника</title>
+</head>
+<body>
+
+<h1>Добавление участника в проект</h1>
+
+<p>
+    Проект:
+    <strong th:text="${project.name}">Название проекта</strong>
+</p>
+
+<div th:if="${errorMessage}">
+    <p style="color: red;" th:text="${errorMessage}">Ошибка</p>
+</div>
+
+<form th:action="@{/projects/{id}/members(id=${project.id})}"
+      th:object="${memberForm}"
+      method="post">
+
+    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+
+    <div>
+        <label for="username">Логин пользователя</label><br>
+        <input id="username" type="text" th:field="*{username}">
+        <div th:if="${#fields.hasErrors('username')}" th:errors="*{username}"></div>
+    </div>
+
+    <br>
+
+    <div>
+        <label for="roleType">Роль в проекте</label><br>
+        <select id="roleType" th:field="*{roleType}">
+            <option value="">Выберите роль</option>
+            <option th:each="role : ${roles}"
+                    th:value="${role}"
+                    th:text="${role}">
+                WORK_EXECUTOR
+            </option>
+        </select>
+        <div th:if="${#fields.hasErrors('roleType')}" th:errors="*{roleType}"></div>
+    </div>
+
+    <br>
+
+    <button type="submit">Добавить участника</button>
+</form>
+
+<p>
+    <a th:href="@{/projects/{id}(id=${project.id})}">
+        Назад к проекту
+    </a>
+</p>
+
+</body>
+</html>
