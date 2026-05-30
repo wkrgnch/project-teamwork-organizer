@@ -6,6 +6,7 @@ import org.springframework.data.repository.query.Param;
 import ru.viktoria.projectteamworkorganizer.entity.Task;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface TaskRepository extends JpaRepository<Task, Integer> {
 
@@ -19,4 +20,16 @@ public interface TaskRepository extends JpaRepository<Task, Integer> {
             order by t.createdAt desc
             """)
     List<Task> findTasksByProjectId(@Param("projectId") Integer projectId);
+
+    @Query("""
+            select t from Task t
+            join fetch t.project
+            left join fetch t.stage
+            left join fetch t.sprint
+            left join fetch t.workType
+            left join fetch t.assignee
+            left join fetch t.createdByUser
+            where t.id = :taskId
+            """)
+    Optional<Task> findTaskDetailsById(@Param("taskId") Integer taskId);
 }

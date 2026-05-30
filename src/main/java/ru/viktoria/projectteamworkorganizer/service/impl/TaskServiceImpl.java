@@ -46,6 +46,11 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
+    public Optional<Task> findById(Integer taskId) {
+        return taskRepository.findTaskDetailsById(taskId);
+    }
+
+    @Override
     @Transactional
     public Task createTask(Integer projectId, TaskCreateDto taskCreateDto, String currentUsername) {
         boolean canManage = canCreateTask(projectId, currentUsername);
@@ -157,7 +162,7 @@ public class TaskServiceImpl implements TaskService {
     public Integer changeStatus(Integer taskId,
                                 TaskStatusType newStatus,
                                 String currentUsername) {
-        Optional<Task> taskOptional = taskRepository.findById(taskId);
+        Optional<Task> taskOptional = taskRepository.findTaskDetailsById(taskId);
 
         if (taskOptional.isEmpty()) {
             throw new IllegalStateException("Задача не найдена");

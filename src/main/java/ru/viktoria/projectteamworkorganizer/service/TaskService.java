@@ -6,14 +6,19 @@ import ru.viktoria.projectteamworkorganizer.entity.enums.TaskStatusType;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 public interface TaskService {
 
     List<Task> findTasksByProjectId(Integer projectId);
+
+    Optional<Task> findById(Integer taskId);
 
     Task createTask(Integer projectId, TaskCreateDto taskCreateDto, String currentUsername);
 
     Integer changeStatus(Integer taskId, TaskStatusType status, String currentUsername);
 
     Map<TaskStatusType, List<Task>> findTasksByBoardStatusForProject(Integer projectId);
+
+
 }

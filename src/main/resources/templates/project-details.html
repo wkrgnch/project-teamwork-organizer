@@ -175,13 +175,14 @@
                     <th>Статус</th>
                     <th>Исполнитель</th>
                     <th>Дедлайн</th>
+                    <th>Действия</th>
                 </tr>
                 </thead>
 
                 <tbody>
                 <tr th:each="task : ${tasks}">
                     <td class="fw-semibold" th:text="${task.title}">Название задачи</td>
-                    <td th:text="${task.stage != null ? task.stage.name : 'Не указана'}">Этап проекта</td>
+                    <td th:text="${task.stage != null ? task.stage.name : 'Не указан'}">Этап проекта</td>
                     <td th:if="${project.methodology.name() == 'SCRUM'}"
                         th:text="${task.sprint != null ? task.sprint.name : 'Без спринта'}">
                         Спринт
@@ -214,6 +215,12 @@
                     <td th:text="${task.assignee != null ? task.assignee.fullName : 'Не назначен'}">Исполнитель</td>
                     <td th:text="${task.deadline != null ? #temporals.format(task.deadline, 'dd.MM.yyyy') : 'Не указан'}">
                         15.05.2026
+                    </td>
+                    <td>
+                        <a class="btn btn-sm btn-outline-secondary"
+                           th:href="@{/tasks/{id}(id=${task.id})}">
+                            Открыть
+                        </a>
                     </td>
                 </tr>
                 </tbody>

@@ -96,6 +96,11 @@
                     </span>
                     </div>
 
+                    <a class="btn btn-sm btn-outline-secondary mt-2"
+                       th:href="@{/tasks/{id}(id=${task.id})}">
+                        Открыть задачу
+                    </a>
+
                     <form th:action="@{/tasks/{taskId}/status(taskId=${task.id})}"
                           method="post"
                           class="mt-3">
