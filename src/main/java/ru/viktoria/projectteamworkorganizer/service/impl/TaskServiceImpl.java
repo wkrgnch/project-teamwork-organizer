@@ -153,65 +153,6 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
-    public Map<Integer, List<Task>> findTasksByStageForProject(Integer projectId) {
-        List<Task> tasks = taskRepository.findTasksByProjectId(projectId);
-
-        Map<Integer, List<Task>> tasksByStage = new HashMap<>();
-
-        for (Task task : tasks) {
-            if (task.getStage() != null) {
-                Integer stageId = task.getStage().getId();
-
-                if (!tasksByStage.containsKey(stageId)) {
-                    tasksByStage.put(stageId, new ArrayList<>());
-                }
-
-                tasksByStage.get(stageId).add(task);
-            }
-        }
-
-        return tasksByStage;
-    }
-
-    @Override
-    @Transactional
-    public Integer changeStage(Integer taskId, Integer stageId, String currentUsername) {
-        Optional<Task> taskOptional = taskRepository.findById(taskId);
-
-        if (taskOptional.isEmpty()) {
-            throw new IllegalStateException("Задача не найдена");
-        }
-
-        Task task = taskOptional.get();
-        Integer projectId = task.getProject().getId();
-
-        boolean canManage = canCreateTask(projectId, currentUsername);
-
-        if (!canManage) {
-            throw new IllegalStateException("Нет прав для изменения стадии задачи");
-        }
-
-        Optional<ProjectStage> stageOptional = projectStageRepository.findById(stageId);
-
-        if (stageOptional.isEmpty()) {
-            throw new IllegalStateException("Этап проекта не найден");
-        }
-
-        ProjectStage newStage = stageOptional.get();
-
-        if (!newStage.getProject().getId().equals(projectId)) {
-            throw new IllegalStateException("Выбранный этап не относится к этому проекту");
-        }
-
-        task.setStage(newStage);
-        task.setUpdatedAt(LocalDateTime.now());
-
-        taskRepository.save(task);
-
-        return projectId;
-    }
-
-    @Override
     @Transactional
     public Integer changeStatus(Integer taskId,
                                 TaskStatusType newStatus,

@@ -63,6 +63,13 @@ public class ProjectServiceImpl implements ProjectService {
         return count > 0;
     }
 
+
+    @Override
+    public boolean isProjectMember(Integer projectId, String username) {
+        long count = projectMemberRepository.countProjectMember(projectId, username);
+        return count > 0;
+    }
+
     @Override
     @Transactional
     public void addMemberToProject(Integer projectId,

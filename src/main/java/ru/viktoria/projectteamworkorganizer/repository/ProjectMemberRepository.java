@@ -29,4 +29,12 @@ public interface ProjectMemberRepository extends JpaRepository<ProjectMember, Pr
     long countMemberRole(@Param("projectId") Integer projectId,
                          @Param("username") String username,
                          @Param("roleType") RoleType roleType);
+
+    @Query("""
+            select count(pm) from ProjectMember pm
+            where pm.project.id = :projectId
+              and pm.user.username = :username
+            """)
+    long countProjectMember(@Param("projectId") Integer projectId,
+                            @Param("username") String username);
 }

@@ -66,6 +66,10 @@ public class ProjectController {
 
         Project project = projectOptional.get();
 
+        if (!projectService.isProjectMember(id, principal.getName())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Нет доступа");
+        }
+
         model.addAttribute("project", project);
         model.addAttribute("stages", projectService.findStagesByProjectId(id));
         model.addAttribute("projectStatuses", ProjectStatusType.values());
@@ -183,6 +187,10 @@ public class ProjectController {
         }
 
         Project project = projectOptional.get();
+
+        if (!projectService.isProjectMember(id, principal.getName())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Нет доступа");
+        }
 
         model.addAttribute("project", project);
         model.addAttribute("boardStatuses", getBoardStatuses());

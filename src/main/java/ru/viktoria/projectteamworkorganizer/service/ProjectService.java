@@ -11,8 +11,8 @@ import ru.viktoria.projectteamworkorganizer.entity.enums.ProjectStatusType;
 import java.util.List;
 import java.util.Optional;
 
-
 public interface ProjectService {
+
     List<Project> findAll();
 
     Project create(ProjectCreateDto projectCreateDto, String username);
@@ -26,6 +26,8 @@ public interface ProjectService {
     List<Sprint> findSprintsByProjectId(Integer projectId);
 
     boolean canManageProject(Integer projectId, String username);
+
+    boolean isProjectMember(Integer projectId, String username);
 
     void addMemberToProject(Integer projectId, ProjectMemberAddDto memberAddDto, String currentUsername);
 

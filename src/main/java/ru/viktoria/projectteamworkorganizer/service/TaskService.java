@@ -13,10 +13,6 @@ public interface TaskService {
 
     Task createTask(Integer projectId, TaskCreateDto taskCreateDto, String currentUsername);
 
-    Map<Integer, List<Task>> findTasksByStageForProject(Integer projectId);
-
-    Integer changeStage(Integer taskId, Integer stageId, String currentUsername);
-
     Integer changeStatus(Integer taskId, TaskStatusType status, String currentUsername);
 
     Map<TaskStatusType, List<Task>> findTasksByBoardStatusForProject(Integer projectId);

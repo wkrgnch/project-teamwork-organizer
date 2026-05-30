@@ -104,21 +104,6 @@ public class TaskController {
         return "redirect:/projects/" + projectId;
     }
 
-    @PostMapping("/tasks/{taskId}/stage")
-    public String changeTaskStage(@PathVariable Integer taskId,
-                                  @RequestParam("stageId") Integer stageId,
-                                  Principal principal) {
-        Integer projectId;
-
-        try {
-            projectId = taskService.changeStage(taskId, stageId, principal.getName());
-        } catch (IllegalStateException exception) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, exception.getMessage());
-        }
-
-        return "redirect:/projects/" + projectId + "/board";
-    }
-
     @PostMapping("/tasks/{taskId}/status")
     public String changeTaskStatus(@PathVariable Integer taskId,
                                    @RequestParam("status") TaskStatusType status,
