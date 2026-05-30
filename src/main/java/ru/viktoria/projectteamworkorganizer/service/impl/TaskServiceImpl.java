@@ -65,13 +65,13 @@ public class TaskServiceImpl implements TaskService {
         Optional<ProjectStage> stageOptional = projectStageRepository.findById(taskCreateDto.getStageId());
 
         if (stageOptional.isEmpty()) {
-            throw new IllegalStateException("Стадия не найдена");
+            throw new IllegalStateException("Этап проекта не найден");
         }
 
         ProjectStage stage = stageOptional.get();
 
         if (!stage.getProject().getId().equals(projectId)) {
-            throw new IllegalStateException("Выбранная стадия не относится к этому проекту");
+            throw new IllegalStateException("Выбранный этап не относится к этому проекту");
         }
 
         Optional<WorkType> workTypeOptional = workTypeRepository.findById(taskCreateDto.getWorkTypeId());
@@ -194,13 +194,13 @@ public class TaskServiceImpl implements TaskService {
         Optional<ProjectStage> stageOptional = projectStageRepository.findById(stageId);
 
         if (stageOptional.isEmpty()) {
-            throw new IllegalStateException("Стадия не найдена");
+            throw new IllegalStateException("Этап проекта не найден");
         }
 
         ProjectStage newStage = stageOptional.get();
 
         if (!newStage.getProject().getId().equals(projectId)) {
-            throw new IllegalStateException("Выбранная стадия не относится к этому проекту");
+            throw new IllegalStateException("Выбранный этап не относится к этому проекту");
         }
 
         task.setStage(newStage);
@@ -209,5 +209,106 @@ public class TaskServiceImpl implements TaskService {
         taskRepository.save(task);
 
         return projectId;
+    }
+
+    @Override
+    @Transactional
+    public Integer changeStatus(Integer taskId,
+                                TaskStatusType newStatus,
+                                String currentUsername) {
+        Optional<Task> taskOptional = taskRepository.findById(taskId);
+
+        if (taskOptional.isEmpty()) {
+            throw new IllegalStateException("Задача не найдена");
+        }
+
+        Task task = taskOptional.get();
+        Integer projectId = task.getProject().getId();
+
+        boolean projectAdmin = hasProjectRole(projectId, currentUsername, RoleType.PROJECT_ORGANIZATION_ADMIN);
+        boolean controlAdmin = hasProjectRole(projectId, currentUsername, RoleType.CONTROL_ADMIN);
+        boolean workExecutor = hasProjectRole(projectId, currentUsername, RoleType.WORK_EXECUTOR);
+
+        boolean allowed = false;
+
+        if (projectAdmin) {
+            allowed = true;
+        }
+
+        if (!allowed && controlAdmin) {
+            if (newStatus == TaskStatusType.DONE
+                    || newStatus == TaskStatusType.NEEDS_REVISION
+                    || newStatus == TaskStatusType.CLOSED) {
+                allowed = true;
+            }
+        }
+
+        if (!allowed && workExecutor) {
+            boolean assignedToCurrentUser = task.getAssignee() != null
+                    && task.getAssignee().getUsername().equals(currentUsername);
+
+            if (assignedToCurrentUser
+                    && (newStatus == TaskStatusType.IN_PROGRESS
+                    || newStatus == TaskStatusType.ON_REVIEW)) {
+                allowed = true;
+            }
+        }
+
+        if (!allowed) {
+            throw new IllegalStateException("Нет прав для изменения статуса задачи");
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+
+        task.setStatus(newStatus);
+        task.setUpdatedAt(now);
+
+        if (newStatus == TaskStatusType.DONE) {
+            task.setCompletedAt(now);
+        }
+
+        if (newStatus == TaskStatusType.CLOSED) {
+            task.setClosedAt(now);
+        }
+
+        taskRepository.save(task);
+
+        return projectId;
+    }
+
+    private boolean hasProjectRole(Integer projectId, String username, RoleType roleType) {
+        long count = projectMemberRepository.countMemberRole(projectId, username, roleType);
+        return count > 0;
+    }
+
+    @Override
+    public Map<TaskStatusType, List<Task>> findTasksByBoardStatusForProject(Integer projectId) {
+        List<Task> tasks = taskRepository.findTasksByProjectId(projectId);
+
+        Map<TaskStatusType, List<Task>> tasksByStatus = new HashMap<>();
+
+        for (Task task : tasks) {
+            TaskStatusType boardStatus = getBoardStatus(task.getStatus());
+
+            if (!tasksByStatus.containsKey(boardStatus)) {
+                tasksByStatus.put(boardStatus, new ArrayList<>());
+            }
+
+            tasksByStatus.get(boardStatus).add(task);
+        }
+
+        return tasksByStatus;
+    }
+
+    private TaskStatusType getBoardStatus(TaskStatusType status) {
+        if (status == TaskStatusType.NEEDS_CLARIFICATION) {
+            return TaskStatusType.TO_DO;
+        }
+
+        if (status == TaskStatusType.CLOSED) {
+            return TaskStatusType.DONE;
+        }
+
+        return status;
     }
 }

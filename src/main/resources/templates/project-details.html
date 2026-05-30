@@ -45,10 +45,6 @@
                 <table class="table table-sm">
                     <tbody>
                     <tr>
-                        <th>ID</th>
-                        <td th:text="${project.id}">1</td>
-                    </tr>
-                    <tr>
                         <th>Методология</th>
                         <td>
                             <span class="badge text-bg-secondary" th:text="${project.methodology}">SCRUM</span>
@@ -56,7 +52,32 @@
                     </tr>
                     <tr>
                         <th>Статус</th>
-                        <td th:text="${project.status}">PLANNED</td>
+                        <td>
+                            <form th:if="${canManageProject}"
+                                  th:action="@{/projects/{id}/status(id=${project.id})}"
+                                  method="post"
+                                  class="d-flex gap-2">
+
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+
+                                <select name="status" class="form-select form-select-sm">
+                                    <option th:each="status : ${projectStatuses}"
+                                            th:value="${status}"
+                                            th:text="${status}"
+                                            th:selected="${status == project.status}">
+                                        PLANNED
+                                    </option>
+                                </select>
+
+                                <button type="submit" class="btn btn-sm btn-primary">
+                                    Сохранить
+                                </button>
+                            </form>
+
+                            <span th:if="${!canManageProject}" th:text="${project.status}">
+                                PLANNED
+                            </span>
+                        </td>
                     </tr>
                     <tr>
                         <th>Дата начала</th>
@@ -147,7 +168,7 @@
                 <thead class="table-light">
                 <tr>
                     <th>Название</th>
-                    <th>Стадия</th>
+                    <th>Этап проекта</th>
                     <th th:if="${project.methodology.name() == 'SCRUM'}">Спринт</th>
                     <th>Тип работы</th>
                     <th>Приоритет</th>
@@ -160,7 +181,7 @@
                 <tbody>
                 <tr th:each="task : ${tasks}">
                     <td class="fw-semibold" th:text="${task.title}">Название задачи</td>
-                    <td th:text="${task.stage != null ? task.stage.name : 'Не указана'}">Стадия</td>
+                    <td th:text="${task.stage != null ? task.stage.name : 'Не указана'}">Этап проекта</td>
                     <td th:if="${project.methodology.name() == 'SCRUM'}"
                         th:text="${task.sprint != null ? task.sprint.name : 'Без спринта'}">
                         Спринт
@@ -169,7 +190,27 @@
                     <td>
                         <span class="badge text-bg-warning" th:text="${task.priority}">MEDIUM</span>
                     </td>
-                    <td th:text="${task.status}">TO_DO</td>
+                    <td>
+                        <form th:action="@{/tasks/{taskId}/status(taskId=${task.id})}"
+                              method="post"
+                              class="d-flex gap-2">
+
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+
+                            <select name="status" class="form-select form-select-sm">
+                                <option th:each="status : ${taskStatuses}"
+                                        th:value="${status}"
+                                        th:text="${status}"
+                                        th:selected="${status == task.status}">
+                                    TO_DO
+                                </option>
+                            </select>
+
+                            <button type="submit" class="btn btn-sm btn-outline-primary">
+                                OK
+                            </button>
+                        </form>
+                    </td>
                     <td th:text="${task.assignee != null ? task.assignee.fullName : 'Не назначен'}">Исполнитель</td>
                     <td th:text="${task.deadline != null ? #temporals.format(task.deadline, 'dd.MM.yyyy') : 'Не указан'}">
                         15.05.2026
@@ -183,7 +224,7 @@
     <div class="row g-4 mt-1">
         <div class="col-lg-6">
             <div class="page-card h-100">
-                <h2 class="h4 mb-3">Стадии проекта</h2>
+                <h2 class="h4 mb-3">Этапы проекта</h2>
 
                 <div class="table-responsive">
                     <table class="table table-hover align-middle">
@@ -196,8 +237,8 @@
 
                         <tbody>
                         <tr th:each="stage : ${stages}">
-                            <td th:text="${stage.name}">Название стадии</td>
-                            <td th:text="${stage.description}">Описание стадии</td>
+                            <td th:text="${stage.name}">Название этапа</td>
+                            <td th:text="${stage.description}">Описание этапа</td>
                         </tr>
                         </tbody>
                     </table>
@@ -207,7 +248,15 @@
 
         <div class="col-lg-6" th:if="${project.methodology.name() == 'SCRUM'}">
             <div class="page-card h-100">
-                <h2 class="h4 mb-3">Спринты</h2>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h2 class="h4 mb-0">Спринты</h2>
+
+                    <a class="btn btn-sm btn-primary"
+                       th:if="${canManageProject}"
+                       th:href="@{/projects/{id}/sprints/new(id=${project.id})}">
+                        Создать спринт
+                    </a>
+                </div>
 
                 <div th:if="${sprints.isEmpty()}" class="alert alert-info">
                     Спринты пока не созданы.

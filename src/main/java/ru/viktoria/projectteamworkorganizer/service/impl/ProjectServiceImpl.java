@@ -226,20 +226,20 @@ public class ProjectServiceImpl implements ProjectService {
 
     private void createScrumTemplate(Project project) {
         createStage(project, "Бэклог", "Список задач, которые планируются к выполнению", 1);
-        createStage(project, "Планирование спринта", "Отбор задач в ближайший спринт", 2);
-        createStage(project, "Спринт в работе", "Выполнение задач текущего спринта", 3);
+        createStage(project, "Планирование спринта", "Выбор задач для ближайшего спринта", 2);
+        createStage(project, "Выполнение задач", "Работа над задачами текущего спринта", 3);
         createStage(project, "Проверка результата", "Проверка выполненных задач", 4);
-        createStage(project, "Завершено", "Завершённые задачи и результаты", 5);
+        createStage(project, "Завершение спринта", "Подведение итогов и фиксация результата", 5);
 
         createFirstSprint(project);
     }
 
     private void createKanbanTemplate(Project project) {
-        createStage(project, "Новые", "Новые задачи, которые ещё не взяты в работу", 1);
-        createStage(project, "В очереди", "Задачи, ожидающие выполнения", 2);
-        createStage(project, "В работе", "Задачи, которые сейчас выполняются", 3);
-        createStage(project, "На проверке", "Задачи, переданные на проверку", 4);
-        createStage(project, "Завершено", "Выполненные задачи", 5);
+        createStage(project, "Планирование", "Определение состава работ по проекту", 1);
+        createStage(project, "Подготовка", "Подготовка задач и исходных материалов", 2);
+        createStage(project, "Разработка", "Выполнение основной части работ", 3);
+        createStage(project, "Проверка", "Проверка результата выполнения работ", 4);
+        createStage(project, "Внедрение", "Передача и использование готового результата", 5);
     }
 
     private void createStage(Project project, String name,
@@ -295,5 +295,30 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     public List<ProjectMember> findMembersByProjectId(Integer projectId) {
         return projectMemberRepository.findMembersByProjectId(projectId);
+    }
+
+    @Override
+    @Transactional
+    public void changeProjectStatus(Integer projectId,
+                                    ProjectStatusType status,
+                                    String currentUsername) {
+        boolean canManage = canManageProject(projectId, currentUsername);
+
+        if (!canManage) {
+            throw new IllegalStateException("Нет прав для изменения статуса проекта");
+        }
+
+        Optional<Project> projectOptional = projectRepository.findById(projectId);
+
+        if (projectOptional.isEmpty()) {
+            throw new IllegalStateException("Проект не найден");
+        }
+
+        Project project = projectOptional.get();
+
+        project.setStatus(status);
+        project.setUpdatedAt(LocalDateTime.now());
+
+        projectRepository.save(project);
     }
 }

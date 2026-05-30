@@ -38,27 +38,36 @@
     </div>
 
     <div class="board">
-        <div class="stage-column" th:each="stage : ${stages}">
-            <h2 class="stage-title" th:text="${stage.name}">Название стадии</h2>
+        <div class="stage-column" th:each="boardStatus : ${boardStatuses}">
+            <h2 class="stage-title" th:text="${taskStatusLabels.get(boardStatus)}">
+                Новые
+            </h2>
 
-            <div th:with="stageTasks=${tasksByStage[stage.id]}">
-                <div class="empty-column" th:if="${stageTasks == null || stageTasks.isEmpty()}">
+            <div th:with="statusTasks=${tasksByStatus.get(boardStatus)}">
+                <div class="empty-column" th:if="${statusTasks == null || statusTasks.isEmpty()}">
                     Задач нет
                 </div>
 
-                <div class="task-card" th:each="task : ${stageTasks}">
+                <div class="task-card" th:each="task : ${statusTasks}">
                     <div class="task-title" th:text="${task.title}">
                         Название задачи
                     </div>
 
                     <div class="task-meta">
-                        Приоритет:
-                        <strong th:text="${task.priority}">MEDIUM</strong>
+                        Текущий статус:
+                        <strong th:text="${taskStatusLabels.get(task.status)}">Новые</strong>
                     </div>
 
                     <div class="task-meta">
-                        Статус:
-                        <strong th:text="${task.status}">TO_DO</strong>
+                        Этап проекта:
+                        <span th:text="${task.stage != null ? task.stage.name : 'Не указан'}">
+                        Этап проекта
+                    </span>
+                    </div>
+
+                    <div class="task-meta">
+                        Приоритет:
+                        <strong th:text="${task.priority}">MEDIUM</strong>
                     </div>
 
                     <div class="task-meta">
@@ -69,44 +78,43 @@
                     <div class="task-meta">
                         Исполнитель:
                         <span th:text="${task.assignee != null ? task.assignee.fullName : 'Не назначен'}">
-                            Не назначен
-                        </span>
+                        Не назначен
+                    </span>
                     </div>
 
                     <div class="task-meta" th:if="${project.methodology.name() == 'SCRUM'}">
                         Спринт:
                         <span th:text="${task.sprint != null ? task.sprint.name : 'Без спринта'}">
-                            Без спринта
-                        </span>
+                        Без спринта
+                    </span>
                     </div>
 
                     <div class="task-meta">
                         Дедлайн:
                         <span th:text="${task.deadline != null ? #temporals.format(task.deadline, 'dd.MM.yyyy') : 'Не указан'}">
-                            Не указан
-                        </span>
+                        Не указан
+                    </span>
                     </div>
 
-                    <form th:if="${canManageProject}"
-                          th:action="@{/tasks/{taskId}/stage(taskId=${task.id})}"
+                    <form th:action="@{/tasks/{taskId}/status(taskId=${task.id})}"
                           method="post"
                           class="mt-3">
 
                         <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
 
-                        <label class="form-label small">Переместить в стадию</label>
+                        <label class="form-label small">Изменить статус</label>
 
-                        <select name="stageId" class="form-select form-select-sm">
-                            <option th:each="availableStage : ${stages}"
-                                    th:value="${availableStage.id}"
-                                    th:text="${availableStage.name}"
-                                    th:selected="${task.stage != null and task.stage.id == availableStage.id}">
-                                Стадия
+                        <select name="status" class="form-select form-select-sm">
+                            <option th:each="availableStatus : ${taskStatuses}"
+                                    th:value="${availableStatus}"
+                                    th:text="${taskStatusLabels.get(availableStatus)}"
+                                    th:selected="${availableStatus == task.status}">
+                                Новые
                             </option>
                         </select>
 
                         <button type="submit" class="btn btn-sm btn-primary mt-2">
-                            Переместить
+                            Сохранить
                         </button>
                     </form>
                 </div>

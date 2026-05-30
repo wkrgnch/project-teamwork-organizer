@@ -5,23 +5,20 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import ru.viktoria.projectteamworkorganizer.dto.ProjectCreateDto;
 import ru.viktoria.projectteamworkorganizer.dto.ProjectMemberAddDto;
 import ru.viktoria.projectteamworkorganizer.entity.Project;
 import ru.viktoria.projectteamworkorganizer.entity.enums.ProjectMethodologyType;
+import ru.viktoria.projectteamworkorganizer.entity.enums.ProjectStatusType;
 import ru.viktoria.projectteamworkorganizer.entity.enums.RoleType;
+import ru.viktoria.projectteamworkorganizer.entity.enums.TaskStatusType;
 import ru.viktoria.projectteamworkorganizer.service.ProjectService;
 import ru.viktoria.projectteamworkorganizer.service.TaskService;
 
 import java.security.Principal;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Controller
 public class ProjectController {
@@ -71,12 +68,27 @@ public class ProjectController {
 
         model.addAttribute("project", project);
         model.addAttribute("stages", projectService.findStagesByProjectId(id));
+        model.addAttribute("projectStatuses", ProjectStatusType.values());
         model.addAttribute("sprints", projectService.findSprintsByProjectId(id));
         model.addAttribute("members", projectService.findMembersByProjectId(id));
         model.addAttribute("tasks", taskService.findTasksByProjectId(id));
+        model.addAttribute("taskStatuses", TaskStatusType.values());
         model.addAttribute("canManageProject", projectService.canManageProject(id, principal.getName()));
         model.addAttribute("currentUsername", principal.getName());
         return "project-details";
+    }
+
+    @PostMapping("/projects/{id}/status")
+    public String changeProjectStatus(@PathVariable Integer id,
+                                      @RequestParam("status") ProjectStatusType status,
+                                      Principal principal) {
+        try {
+            projectService.changeProjectStatus(id, status, principal.getName());
+        } catch (IllegalStateException exception) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, exception.getMessage());
+        }
+
+        return "redirect:/projects/" + id;
     }
 
     @GetMapping("/projects/{id}/members/new")
@@ -173,10 +185,38 @@ public class ProjectController {
         Project project = projectOptional.get();
 
         model.addAttribute("project", project);
-        model.addAttribute("stages", projectService.findStagesByProjectId(id));
-        model.addAttribute("tasksByStage", taskService.findTasksByStageForProject(id));
+        model.addAttribute("boardStatuses", getBoardStatuses());
+        model.addAttribute("taskStatuses", TaskStatusType.values());
+        model.addAttribute("tasksByStatus", taskService.findTasksByBoardStatusForProject(id));
+        model.addAttribute("taskStatusLabels", getTaskStatusLabels());
         model.addAttribute("canManageProject", projectService.canManageProject(id, principal.getName()));
 
         return "project-board";
+    }
+
+    private List<TaskStatusType> getBoardStatuses() {
+        List<TaskStatusType> statuses = new ArrayList<>();
+
+        statuses.add(TaskStatusType.TO_DO);
+        statuses.add(TaskStatusType.IN_PROGRESS);
+        statuses.add(TaskStatusType.ON_REVIEW);
+        statuses.add(TaskStatusType.NEEDS_REVISION);
+        statuses.add(TaskStatusType.DONE);
+
+        return statuses;
+    }
+
+    private Map<TaskStatusType, String> getTaskStatusLabels() {
+        Map<TaskStatusType, String> labels = new HashMap<>();
+
+        labels.put(TaskStatusType.TO_DO, "Новые");
+        labels.put(TaskStatusType.IN_PROGRESS, "В работе");
+        labels.put(TaskStatusType.NEEDS_CLARIFICATION, "Требует уточнения");
+        labels.put(TaskStatusType.ON_REVIEW, "На проверке");
+        labels.put(TaskStatusType.NEEDS_REVISION, "На доработке");
+        labels.put(TaskStatusType.DONE, "Завершено");
+        labels.put(TaskStatusType.CLOSED, "Закрыто");
+
+        return labels;
     }
 }

@@ -15,7 +15,7 @@ public class TaskCreateDto {
     @NotBlank(message = "Описание задачи обязательно")
     private String description;
 
-    @NotNull(message = "Стадия обязательна")
+    @NotNull(message = "Этап проекта обязателен")
     private Integer stageId;
 
     private Integer sprintId;

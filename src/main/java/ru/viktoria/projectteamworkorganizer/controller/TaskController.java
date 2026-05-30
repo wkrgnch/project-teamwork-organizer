@@ -10,6 +10,7 @@ import org.springframework.web.server.ResponseStatusException;
 import ru.viktoria.projectteamworkorganizer.dto.TaskCreateDto;
 import ru.viktoria.projectteamworkorganizer.entity.Project;
 import ru.viktoria.projectteamworkorganizer.entity.enums.TaskPriorityType;
+import ru.viktoria.projectteamworkorganizer.entity.enums.TaskStatusType;
 import ru.viktoria.projectteamworkorganizer.service.ProjectService;
 import ru.viktoria.projectteamworkorganizer.service.TaskService;
 import ru.viktoria.projectteamworkorganizer.service.WorkTypeService;
@@ -111,6 +112,21 @@ public class TaskController {
 
         try {
             projectId = taskService.changeStage(taskId, stageId, principal.getName());
+        } catch (IllegalStateException exception) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, exception.getMessage());
+        }
+
+        return "redirect:/projects/" + projectId + "/board";
+    }
+
+    @PostMapping("/tasks/{taskId}/status")
+    public String changeTaskStatus(@PathVariable Integer taskId,
+                                   @RequestParam("status") TaskStatusType status,
+                                   Principal principal) {
+        Integer projectId;
+
+        try {
+            projectId = taskService.changeStatus(taskId, status, principal.getName());
         } catch (IllegalStateException exception) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, exception.getMessage());
         }

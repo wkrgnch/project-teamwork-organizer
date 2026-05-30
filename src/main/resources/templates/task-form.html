@@ -44,13 +44,13 @@
                 </div>
 
                 <div class="mb-3">
-                    <label for="stageId" class="form-label">Стадия</label>
+                    <label for="stageId" class="form-label">Этап проекта</label>
                     <select id="stageId" th:field="*{stageId}" class="form-select">
-                        <option value="">Выберите стадию</option>
+                        <option value="">Выберите этап проекта</option>
                         <option th:each="stage : ${stages}"
                                 th:value="${stage.id}"
                                 th:text="${stage.name}">
-                            Стадия
+                            Этап проекта
                         </option>
                     </select>
                     <div class="text-danger small" th:if="${#fields.hasErrors('stageId')}" th:errors="*{stageId}"></div>

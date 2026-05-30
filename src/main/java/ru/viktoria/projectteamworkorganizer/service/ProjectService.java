@@ -6,6 +6,7 @@ import ru.viktoria.projectteamworkorganizer.entity.Project;
 import ru.viktoria.projectteamworkorganizer.entity.ProjectMember;
 import ru.viktoria.projectteamworkorganizer.entity.ProjectStage;
 import ru.viktoria.projectteamworkorganizer.entity.Sprint;
+import ru.viktoria.projectteamworkorganizer.entity.enums.ProjectStatusType;
 
 import java.util.List;
 import java.util.Optional;
@@ -31,4 +32,6 @@ public interface ProjectService {
     List<Project> findProjectsForUser(String username);
 
     void removeMemberFromProject(Integer projectId, Integer userId, String currentUsername);
+
+    void changeProjectStatus(Integer projectId, ProjectStatusType status, String currentUsername);
 }
