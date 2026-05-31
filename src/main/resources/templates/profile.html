@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Профиль</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<main class="container py-4">
+    <div class="page-card">
+        <h1 class="page-title mb-3">Профиль пользователя</h1>
+
+        <div th:if="${param.passwordChanged}" class="alert alert-success">
+            Пароль успешно изменён.
+        </div>
+
+        <div class="table-responsive mb-4">
+            <table class="table table-hover align-middle">
+                <tbody>
+                <tr>
+                    <th>ФИО</th>
+                    <td th:text="${user.fullName}">ФИО</td>
+                </tr>
+                <tr>
+                    <th>Логин</th>
+                    <td th:text="${user.username}">username</td>
+                </tr>
+                <tr>
+                    <th>Email</th>
+                    <td th:text="${user.email != null ? user.email : 'Не указан'}">email</td>
+                </tr>
+                <tr>
+                    <th>Дата регистрации</th>
+                    <td th:text="${#temporals.format(user.createdAt, 'dd.MM.yyyy HH:mm')}">01.06.2026</td>
+                </tr>
+                <tr th:if="${user.systemRole != null}">
+                    <th>Системная роль</th>
+                    <td th:text="${user.systemRole.type}">GLOBAL_ADMIN</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="d-flex gap-2 flex-wrap">
+            <a class="btn btn-primary" th:href="@{/profile/password}">
+                Сменить пароль
+            </a>
+
+            <a class="btn btn-outline-danger" th:href="@{/profile/delete}">
+                Удалить профиль
+            </a>
+        </div>
+    </div>
+</main>
+
+</body>
+</html>

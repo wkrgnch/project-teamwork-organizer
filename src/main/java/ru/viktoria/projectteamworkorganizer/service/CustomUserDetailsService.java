@@ -6,7 +6,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
-import ru.viktoria.projectteamworkorganizer.entity.Role;
 import ru.viktoria.projectteamworkorganizer.entity.User;
 import ru.viktoria.projectteamworkorganizer.repository.UserRepository;
 
@@ -26,12 +25,13 @@ public class CustomUserDetailsService implements UserDetailsService {
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         Optional<User> userOptional = userRepository.findByUsername(username);
 
-        if (userOptional.isEmpty())
+        if (userOptional.isEmpty()) {
             throw new UsernameNotFoundException("Пользователь не найден");
+        }
 
         User user = userOptional.get();
 
-        List<GrantedAuthority>  authorities = new ArrayList<>();
+        List<GrantedAuthority> authorities = new ArrayList<>();
 
         if (user.getSystemRole() != null) {
             String roleName = "ROLE_" + user.getSystemRole().getType().name();
@@ -43,6 +43,7 @@ public class CustomUserDetailsService implements UserDetailsService {
                 .withUsername(user.getUsername())
                 .password(user.getPasswordHash())
                 .authorities(authorities)
+                .disabled(user.isDeleted())
                 .build();
     }
 }

@@ -32,6 +32,12 @@ public class User {
     @JoinColumn(name = "system_role_id")
     private Role systemRole;
 
+    @Column(name = "is_deleted", nullable = false)
+    private Boolean deleted = false;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
     public Integer getId() {
         return id;
     }
@@ -86,5 +92,25 @@ public class User {
 
     public void setSystemRole(Role systemRole) {
         this.systemRole = systemRole;
+    }
+
+    public Boolean getDeleted() {
+        return deleted;
+    }
+
+    public void setDeleted(Boolean deleted) {
+        this.deleted = deleted;
+    }
+
+    public boolean isDeleted() {
+        return Boolean.TRUE.equals(deleted);
+    }
+
+    public LocalDateTime getDeletedAt() {
+        return deletedAt;
+    }
+
+    public void setDeletedAt(LocalDateTime deletedAt) {
+        this.deletedAt = deletedAt;
     }
 }
