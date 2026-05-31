@@ -15,6 +15,9 @@ spring:
 
   flyway:
     enabled: true
+  web:
+    error:
+      include-message: always
 
 server:
   port: 8081
