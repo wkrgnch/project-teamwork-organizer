@@ -12,24 +12,69 @@
 <div th:replace="~{fragments/navbar :: navbar}"></div>
 
 <main class="container py-4">
-    <div class="page-card">
+    <div class="page-card mb-4">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <div>
                 <h1 class="page-title mb-1">Типы работ</h1>
-                <p class="text-muted mb-0">Справочник типов работ для задач.</p>
+                <p class="text-muted mb-0">
+                    Системный справочник типов работ, которые используются при создании задач.
+                </p>
             </div>
 
-            <a class="btn btn-outline-secondary" th:href="@{/projects}">
-                Назад к проектам
+            <a class="btn btn-outline-secondary" th:href="@{/admin}">
+                Назад в панель администратора
             </a>
         </div>
 
-        <div class="table-responsive">
+        <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}">
+            Ошибка
+        </div>
+
+        <form th:action="@{/work-types}"
+              th:object="${workTypeForm}"
+              method="post"
+              class="row g-3 mb-4">
+
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+
+            <div class="col-md-4">
+                <label for="type" class="form-label">Название типа работы</label>
+                <input id="type" type="text" th:field="*{type}" class="form-control"
+                       placeholder="Например: Аналитика">
+                <div class="text-danger small"
+                     th:if="${#fields.hasErrors('type')}"
+                     th:errors="*{type}">
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <label for="description" class="form-label">Описание</label>
+                <input id="description" type="text" th:field="*{description}" class="form-control"
+                       placeholder="Краткое описание типа работы">
+                <div class="text-danger small"
+                     th:if="${#fields.hasErrors('description')}"
+                     th:errors="*{description}">
+                </div>
+            </div>
+
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">
+                    Добавить
+                </button>
+            </div>
+        </form>
+
+        <div th:if="${workTypes.isEmpty()}" class="alert alert-info">
+            Типы работ пока не добавлены.
+        </div>
+
+        <div class="table-responsive" th:if="${!workTypes.isEmpty()}">
             <table class="table table-hover align-middle">
                 <thead class="table-light">
                 <tr>
                     <th>Тип</th>
                     <th>Описание</th>
+                    <th class="text-end">Действия</th>
                 </tr>
                 </thead>
 
@@ -37,6 +82,16 @@
                 <tr th:each="workType : ${workTypes}">
                     <td class="fw-semibold" th:text="${workType.type}">Тип работы</td>
                     <td th:text="${workType.description}">Описание</td>
+                    <td class="text-end">
+                        <form th:action="@{/work-types/{id}/delete(id=${workType.id})}"
+                              method="post"
+                              class="d-inline">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                Удалить
+                            </button>
+                        </form>
+                    </td>
                 </tr>
                 </tbody>
             </table>

@@ -6,11 +6,14 @@ import ru.viktoria.projectteamworkorganizer.dto.TaskCommentCreateDto;
 import ru.viktoria.projectteamworkorganizer.entity.Task;
 import ru.viktoria.projectteamworkorganizer.entity.TaskComment;
 import ru.viktoria.projectteamworkorganizer.entity.User;
+import ru.viktoria.projectteamworkorganizer.entity.enums.ActionObjectType;
+import ru.viktoria.projectteamworkorganizer.entity.enums.UserActionType;
 import ru.viktoria.projectteamworkorganizer.repository.TaskCommentRepository;
 import ru.viktoria.projectteamworkorganizer.repository.TaskRepository;
 import ru.viktoria.projectteamworkorganizer.repository.UserRepository;
 import ru.viktoria.projectteamworkorganizer.service.ProjectService;
 import ru.viktoria.projectteamworkorganizer.service.TaskCommentService;
+import ru.viktoria.projectteamworkorganizer.service.UserActionLogService;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -23,15 +26,19 @@ public class TaskCommentServiceImpl implements TaskCommentService {
     private final TaskRepository taskRepository;
     private final UserRepository userRepository;
     private final ProjectService projectService;
+    private final UserActionLogService userActionLogService;
+
 
     public TaskCommentServiceImpl(TaskCommentRepository taskCommentRepository,
                                   TaskRepository taskRepository,
                                   UserRepository userRepository,
-                                  ProjectService projectService) {
+                                  ProjectService projectService,
+                                  UserActionLogService userActionLogService) {
         this.taskCommentRepository = taskCommentRepository;
         this.taskRepository = taskRepository;
         this.userRepository = userRepository;
         this.projectService = projectService;
+        this.userActionLogService = userActionLogService;
     }
 
     @Override
@@ -71,6 +78,16 @@ public class TaskCommentServiceImpl implements TaskCommentService {
         comment.setText(commentCreateDto.getText());
         comment.setCreatedAt(LocalDateTime.now());
 
-        taskCommentRepository.save(comment);
+        TaskComment savedComment = taskCommentRepository.save(comment);
+
+        userActionLogService.log(
+                currentUsername,
+                UserActionType.ADD_COMMENT,
+                ActionObjectType.COMMENT,
+                savedComment.getId(),
+                "Комментарий к задаче",
+                "Добавлен комментарий к задаче \"" + task.getTitle() + "\""
+        );
+
     }
 }

@@ -1,18 +1,41 @@
 <!DOCTYPE html>
-<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<html lang="ru"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <body>
 
 <nav th:fragment="navbar" class="navbar navbar-expand-lg navbar-dark bg-dark">
     <div class="container">
-        <a class="navbar-brand fw-bold" th:href="@{/projects}">
+        <a class="navbar-brand fw-bold"
+           sec:authorize="!hasRole('GLOBAL_ADMIN')"
+           th:href="@{/projects}">
+            Project Teamwork Organizer
+        </a>
+
+        <a class="navbar-brand fw-bold"
+           sec:authorize="hasRole('GLOBAL_ADMIN')"
+           th:href="@{/admin}">
             Project Teamwork Organizer
         </a>
 
         <div class="d-flex gap-2 align-items-center">
-            <a class="btn btn-outline-light btn-sm" th:href="@{/projects}">
+            <a class="btn btn-outline-light btn-sm"
+               sec:authorize="!hasRole('GLOBAL_ADMIN')"
+               th:href="@{/projects}">
                 Проекты
             </a>
 
+            <a class="btn btn-outline-light btn-sm"
+               sec:authorize="hasRole('GLOBAL_ADMIN')"
+               th:href="@{/admin}">
+                Панель администратора
+            </a>
+
+            <a class="btn btn-outline-light btn-sm"
+               sec:authorize="hasRole('GLOBAL_ADMIN')"
+               th:href="@{/logs}">
+                Журнал действий
+            </a>
 
             <form th:action="@{/logout}" method="post" class="m-0">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">

@@ -4,11 +4,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.viktoria.projectteamworkorganizer.dto.TaskCreateDto;
 import ru.viktoria.projectteamworkorganizer.entity.*;
+import ru.viktoria.projectteamworkorganizer.entity.enums.ActionObjectType;
 import ru.viktoria.projectteamworkorganizer.entity.enums.RoleType;
 import ru.viktoria.projectteamworkorganizer.entity.enums.TaskStatusType;
+import ru.viktoria.projectteamworkorganizer.entity.enums.UserActionType;
 import ru.viktoria.projectteamworkorganizer.entity.id.ProjectMemberId;
 import ru.viktoria.projectteamworkorganizer.repository.*;
 import ru.viktoria.projectteamworkorganizer.service.TaskService;
+import ru.viktoria.projectteamworkorganizer.service.UserActionLogService;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -23,6 +26,8 @@ public class TaskServiceImpl implements TaskService {
     private final WorkTypeRepository workTypeRepository;
     private final UserRepository userRepository;
     private final ProjectMemberRepository projectMemberRepository;
+    private final UserActionLogService userActionLogService;
+
 
     public TaskServiceImpl(TaskRepository taskRepository,
                            ProjectRepository projectRepository,
@@ -30,7 +35,8 @@ public class TaskServiceImpl implements TaskService {
                            SprintRepository sprintRepository,
                            WorkTypeRepository workTypeRepository,
                            UserRepository userRepository,
-                           ProjectMemberRepository projectMemberRepository) {
+                           ProjectMemberRepository projectMemberRepository,
+                           UserActionLogService userActionLogService) {
         this.taskRepository = taskRepository;
         this.projectRepository = projectRepository;
         this.projectStageRepository = projectStageRepository;
@@ -38,6 +44,7 @@ public class TaskServiceImpl implements TaskService {
         this.workTypeRepository = workTypeRepository;
         this.userRepository = userRepository;
         this.projectMemberRepository = projectMemberRepository;
+        this.userActionLogService = userActionLogService;
     }
 
     @Override
@@ -144,7 +151,19 @@ public class TaskServiceImpl implements TaskService {
         task.setDeadline(taskCreateDto.getDeadline());
         task.setCreatedAt(LocalDateTime.now());
 
-        return taskRepository.save(task);
+        Task savedTask = taskRepository.save(task);
+
+        userActionLogService.log(
+                currentUsername,
+                UserActionType.CREATE_TASK,
+                ActionObjectType.TASK,
+                savedTask.getId(),
+                savedTask.getTitle(),
+                "Создана задача \"" + savedTask.getTitle()
+                        + "\" в проекте \"" + project.getName() + "\""
+        );
+
+        return savedTask;
     }
 
     private boolean canCreateTask(Integer projectId, String username) {
@@ -218,6 +237,15 @@ public class TaskServiceImpl implements TaskService {
         }
 
         taskRepository.save(task);
+
+        userActionLogService.log(
+                currentUsername,
+                UserActionType.CHANGE_TASK_STATUS,
+                ActionObjectType.TASK,
+                task.getId(),
+                task.getTitle(),
+                "Статус задачи изменён на " + newStatus
+        );
 
         return projectId;
     }

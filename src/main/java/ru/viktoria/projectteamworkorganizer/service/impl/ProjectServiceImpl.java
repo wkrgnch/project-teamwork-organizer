@@ -5,13 +5,11 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.viktoria.projectteamworkorganizer.dto.ProjectCreateDto;
 import ru.viktoria.projectteamworkorganizer.dto.ProjectMemberAddDto;
 import ru.viktoria.projectteamworkorganizer.entity.*;
-import ru.viktoria.projectteamworkorganizer.entity.enums.ProjectMethodologyType;
-import ru.viktoria.projectteamworkorganizer.entity.enums.ProjectStageStatusType;
-import ru.viktoria.projectteamworkorganizer.entity.enums.ProjectStatusType;
-import ru.viktoria.projectteamworkorganizer.entity.enums.RoleType;
+import ru.viktoria.projectteamworkorganizer.entity.enums.*;
 import ru.viktoria.projectteamworkorganizer.entity.id.ProjectMemberId;
 import ru.viktoria.projectteamworkorganizer.repository.*;
 import ru.viktoria.projectteamworkorganizer.service.ProjectService;
+import ru.viktoria.projectteamworkorganizer.service.UserActionLogService;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -26,19 +24,22 @@ public class ProjectServiceImpl implements ProjectService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final ProjectMemberRepository projectMemberRepository;
+    private final UserActionLogService userActionLogService;
 
     public ProjectServiceImpl(ProjectRepository projectRepository,
                               ProjectStageRepository projectStageRepository,
                               SprintRepository sprintRepository,
                               UserRepository userRepository,
                               RoleRepository roleRepository,
-                              ProjectMemberRepository projectMemberRepository) {
+                              ProjectMemberRepository projectMemberRepository,
+                              UserActionLogService userActionLogService) {
         this.projectRepository = projectRepository;
         this.projectStageRepository = projectStageRepository;
         this.sprintRepository = sprintRepository;
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.projectMemberRepository = projectMemberRepository;
+        this.userActionLogService = userActionLogService;
     }
 
     @Override
@@ -137,6 +138,15 @@ public class ProjectServiceImpl implements ProjectService {
         projectMember.getRoles().add(role);
 
         projectMemberRepository.save(projectMember);
+
+        userActionLogService.log(
+                currentUsername,
+                UserActionType.UPDATE_PROJECT,
+                ActionObjectType.PROJECT,
+                project.getId(),
+                project.getName(),
+                "В проект добавлен пользователь " + userToAdd.getUsername() + " с ролью " + role.getType()
+        );
     }
 
     @Override
@@ -216,6 +226,14 @@ public class ProjectServiceImpl implements ProjectService {
             createKanbanTemplate(savedProject);
         }
 
+        userActionLogService.log(
+                username,
+                UserActionType.CREATE_PROJECT,
+                ActionObjectType.PROJECT,
+                savedProject.getId(),
+                savedProject.getName(),
+                "Создан проект \"" + savedProject.getName() + "\""
+        );
         return savedProject;
     }
 
@@ -327,5 +345,14 @@ public class ProjectServiceImpl implements ProjectService {
         project.setUpdatedAt(LocalDateTime.now());
 
         projectRepository.save(project);
+
+        userActionLogService.log(
+                currentUsername,
+                UserActionType.UPDATE_PROJECT,
+                ActionObjectType.PROJECT,
+                project.getId(),
+                project.getName(),
+                "Изменён статус проекта на " + status
+        );
     }
 }
