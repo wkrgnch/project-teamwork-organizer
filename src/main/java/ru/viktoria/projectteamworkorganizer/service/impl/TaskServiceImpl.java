@@ -6,10 +6,10 @@ import ru.viktoria.projectteamworkorganizer.dto.TaskCreateDto;
 import ru.viktoria.projectteamworkorganizer.dto.TaskResultDto;
 import ru.viktoria.projectteamworkorganizer.entity.*;
 import ru.viktoria.projectteamworkorganizer.entity.enums.ActionObjectType;
+import ru.viktoria.projectteamworkorganizer.entity.enums.RequestStatusType;
 import ru.viktoria.projectteamworkorganizer.entity.enums.RoleType;
 import ru.viktoria.projectteamworkorganizer.entity.enums.TaskStatusType;
 import ru.viktoria.projectteamworkorganizer.entity.enums.UserActionType;
-import ru.viktoria.projectteamworkorganizer.entity.id.ProjectMemberId;
 import ru.viktoria.projectteamworkorganizer.repository.*;
 import ru.viktoria.projectteamworkorganizer.service.TaskService;
 import ru.viktoria.projectteamworkorganizer.service.UserActionLogService;
@@ -27,6 +27,7 @@ public class TaskServiceImpl implements TaskService {
     private final WorkTypeRepository workTypeRepository;
     private final UserRepository userRepository;
     private final ProjectMemberRepository projectMemberRepository;
+    private final ProjectRequestRepository projectRequestRepository;
     private final UserActionLogService userActionLogService;
 
     public TaskServiceImpl(TaskRepository taskRepository,
@@ -36,6 +37,7 @@ public class TaskServiceImpl implements TaskService {
                            WorkTypeRepository workTypeRepository,
                            UserRepository userRepository,
                            ProjectMemberRepository projectMemberRepository,
+                           ProjectRequestRepository projectRequestRepository,
                            UserActionLogService userActionLogService) {
         this.taskRepository = taskRepository;
         this.projectRepository = projectRepository;
@@ -44,6 +46,7 @@ public class TaskServiceImpl implements TaskService {
         this.workTypeRepository = workTypeRepository;
         this.userRepository = userRepository;
         this.projectMemberRepository = projectMemberRepository;
+        this.projectRequestRepository = projectRequestRepository;
         this.userActionLogService = userActionLogService;
     }
 
@@ -121,10 +124,18 @@ public class TaskServiceImpl implements TaskService {
 
             assignee = assigneeOptional.get();
 
-            ProjectMemberId assigneeMemberId = new ProjectMemberId(projectId, assignee.getId());
+            if (Boolean.TRUE.equals(assignee.getDeleted())) {
+                throw new IllegalStateException("Нельзя назначить задачу удалённому пользователю");
+            }
 
-            if (!projectMemberRepository.existsById(assigneeMemberId)) {
-                throw new IllegalStateException("Исполнитель не является участником этого проекта");
+            long executorRoleCount = projectMemberRepository.countMemberRole(
+                    projectId,
+                    assignee.getUsername(),
+                    RoleType.WORK_EXECUTOR
+            );
+
+            if (executorRoleCount == 0) {
+                throw new IllegalStateException("Исполнителем можно назначить только участника с ролью исполнителя");
             }
         }
 
@@ -135,6 +146,21 @@ public class TaskServiceImpl implements TaskService {
         }
 
         User createdByUser = createdByOptional.get();
+
+        ProjectRequest request = null;
+
+        if (taskCreateDto.getRequestId() != null) {
+            request = projectRequestRepository.findDetailedById(taskCreateDto.getRequestId())
+                    .orElseThrow(() -> new IllegalStateException("Заявка не найдена"));
+
+            if (!request.getProject().getId().equals(projectId)) {
+                throw new IllegalStateException("Заявка не относится к этому проекту");
+            }
+
+            if (request.getStatus() != RequestStatusType.ACCEPTED) {
+                throw new IllegalStateException("Создать задачу можно только по принятой заявке");
+            }
+        }
 
         Task task = new Task();
 
@@ -148,10 +174,26 @@ public class TaskServiceImpl implements TaskService {
         task.setStatus(TaskStatusType.TO_DO);
         task.setAssignee(assignee);
         task.setCreatedByUser(createdByUser);
+        task.setRequest(request);
         task.setDeadline(taskCreateDto.getDeadline());
         task.setCreatedAt(LocalDateTime.now());
 
         Task savedTask = taskRepository.save(task);
+
+        if (request != null) {
+            request.setStatus(RequestStatusType.CONVERTED_TO_TASK);
+            request.setUpdatedAt(LocalDateTime.now());
+            projectRequestRepository.save(request);
+
+            userActionLogService.log(
+                    currentUsername,
+                    UserActionType.UPDATE_REQUEST,
+                    ActionObjectType.REQUEST,
+                    request.getId(),
+                    request.getTitle(),
+                    "По заявке \"" + request.getTitle() + "\" создана задача \"" + savedTask.getTitle() + "\""
+            );
+        }
 
         userActionLogService.log(
                 currentUsername,

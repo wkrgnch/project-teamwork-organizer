@@ -14,6 +14,7 @@ import ru.viktoria.projectteamworkorganizer.entity.enums.ProjectMethodologyType;
 import ru.viktoria.projectteamworkorganizer.entity.enums.ProjectStatusType;
 import ru.viktoria.projectteamworkorganizer.entity.enums.RoleType;
 import ru.viktoria.projectteamworkorganizer.entity.enums.TaskStatusType;
+import ru.viktoria.projectteamworkorganizer.service.ProjectRequestService;
 import ru.viktoria.projectteamworkorganizer.service.ProjectService;
 import ru.viktoria.projectteamworkorganizer.service.TaskService;
 
@@ -24,10 +25,14 @@ import java.util.*;
 public class ProjectController {
     private ProjectService projectService;
     private final TaskService taskService;
+    private ProjectRequestService projectRequestService;
 
-    public ProjectController(ProjectService projectService, TaskService taskService) {
+    public ProjectController(ProjectService projectService,
+                             TaskService taskService,
+                             ProjectRequestService projectRequestService) {
         this.projectService = projectService;
         this.taskService = taskService;
+        this.projectRequestService = projectRequestService;
     }
 
     @GetMapping("/projects")
@@ -79,6 +84,8 @@ public class ProjectController {
         model.addAttribute("taskStatuses", TaskStatusType.values());
         model.addAttribute("canManageProject", projectService.canManageProject(id, principal.getName()));
         model.addAttribute("currentUsername", principal.getName());
+        model.addAttribute("canCreateRequest", projectRequestService.canCreateRequest(id, principal.getName()));
+        model.addAttribute("canManageRequests", projectRequestService.canManageRequests(id, principal.getName()));
         return "project-details";
     }
 

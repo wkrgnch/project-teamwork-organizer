@@ -9,6 +9,8 @@ import java.time.LocalDate;
 
 public class TaskCreateDto {
 
+    private Integer requestId;
+
     @NotBlank(message = "Название задачи обязательно")
     private String title;
 
@@ -30,6 +32,14 @@ public class TaskCreateDto {
 
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     private LocalDate deadline;
+
+    public Integer getRequestId() {
+        return requestId;
+    }
+
+    public void setRequestId(Integer requestId) {
+        this.requestId = requestId;
+    }
 
     public String getTitle() {
         return title;

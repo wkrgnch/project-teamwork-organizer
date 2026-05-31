@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Заявка</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<main class="container py-4">
+    <div class="page-card mb-4">
+        <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+            <div>
+                <h1 class="page-title mb-2" th:text="${request.title}">Название заявки</h1>
+                <p class="text-muted mb-0">
+                    Проект:
+                    <a th:href="@{/projects/{id}(id=${request.project.id})}"
+                       th:text="${request.project.name}">Название проекта</a>
+                </p>
+            </div>
+
+            <span class="badge text-bg-secondary fs-6"
+                  th:text="${requestStatusLabels.get(request.status)}">
+                Новая
+            </span>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-lg-8">
+                <h2 class="h5">Цель</h2>
+                <p th:text="${request.goal != null && !request.goal.isBlank() ? request.goal : 'Не указана'}">
+                    Не указана
+                </p>
+
+                <h2 class="h5 mt-4">Описание</h2>
+                <p th:text="${request.description}">Описание заявки</p>
+
+                <h2 class="h5 mt-4">Ожидаемый результат</h2>
+                <p th:text="${request.expectedResult}">Ожидаемый результат</p>
+
+                <div th:if="${request.materialUrl != null && !request.materialUrl.isBlank()}">
+                    <h2 class="h5 mt-4">Материалы</h2>
+                    <a th:href="${request.materialUrl}" th:text="${request.materialUrl}" target="_blank">
+                        ссылка
+                    </a>
+                </div>
+
+                <div th:if="${request.clarification != null && !request.clarification.isBlank()}" class="alert alert-warning mt-4">
+                    <strong>Уточнение / комментарий по заявке:</strong>
+                    <div th:text="${request.clarification}">Текст уточнения</div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="border rounded-4 p-3 bg-light">
+                    <div class="mb-2">
+                        <span class="text-muted">Инициатор:</span><br>
+                        <strong th:text="${request.author != null ? request.author.fullName : 'Пользователь удалён'}">
+                            Автор
+                        </strong>
+                    </div>
+
+                    <div class="mb-2">
+                        <span class="text-muted">Желаемый срок:</span><br>
+                        <strong th:text="${request.desiredDeadline != null ? #temporals.format(request.desiredDeadline, 'dd.MM.yyyy') : 'Не указан'}">
+                            Не указан
+                        </strong>
+                    </div>
+
+                    <div class="mb-2">
+                        <span class="text-muted">Создана:</span><br>
+                        <strong th:text="${#temporals.format(request.createdAt, 'dd.MM.yyyy HH:mm')}">
+                            01.06.2026
+                        </strong>
+                    </div>
+
+                    <div>
+                        <span class="text-muted">Обновлена:</span><br>
+                        <strong th:text="${request.updatedAt != null ? #temporals.format(request.updatedAt, 'dd.MM.yyyy HH:mm') : 'Не обновлялась'}">
+                            Не обновлялась
+                        </strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="page-card mb-4" th:if="${canProcessRequest}">
+        <h2 class="h4 mb-3">Обработка заявки</h2>
+
+        <div class="d-flex gap-2 flex-wrap mb-3">
+            <form th:action="@{/requests/{id}/accept(id=${request.id})}" method="post">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                <button type="submit" class="btn btn-success">Принять заявку</button>
+            </form>
+        </div>
+
+        <form th:action="@{/requests/{id}/request-clarification(id=${request.id})}"
+              th:object="${decisionForm}"
+              method="post"
+              class="mb-3">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+            <label class="form-label">Что нужно уточнить?</label>
+            <textarea th:field="*{clarification}" class="form-control mb-2" rows="2"></textarea>
+            <button type="submit" class="btn btn-outline-warning">Запросить уточнение</button>
+        </form>
+
+        <form th:action="@{/requests/{id}/reject(id=${request.id})}"
+              th:object="${decisionForm}"
+              method="post">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+            <label class="form-label">Причина отклонения</label>
+            <textarea th:field="*{clarification}" class="form-control mb-2" rows="2"></textarea>
+            <button type="submit" class="btn btn-outline-danger">Отклонить заявку</button>
+        </form>
+    </div>
+
+    <div class="page-card mb-4" th:if="${canAddClarification}">
+        <h2 class="h4 mb-3">Уточнить заявку</h2>
+
+        <form th:action="@{/requests/{id}/clarification(id=${request.id})}"
+              th:object="${clarificationForm}"
+              method="post">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+            <textarea th:field="*{clarification}" class="form-control mb-2" rows="3"
+                      placeholder="Введите уточнение по заявке"></textarea>
+            <button type="submit" class="btn btn-primary">Отправить уточнение</button>
+        </form>
+    </div>
+
+    <div class="page-card">
+        <div class="d-flex gap-2 flex-wrap">
+            <a class="btn btn-outline-secondary"
+               th:href="@{/projects/{projectId}/requests(projectId=${request.project.id})}">
+                Назад к заявкам проекта
+            </a>
+
+            <form th:if="${canCancelRequest}"
+                  th:action="@{/requests/{id}/cancel(id=${request.id})}"
+                  method="post">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                <button type="submit" class="btn btn-outline-danger">Отменить заявку</button>
+            </form>
+        </div>
+    </div>
+</main>
+
+</body>
+</html>

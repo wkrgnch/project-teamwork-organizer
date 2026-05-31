@@ -19,6 +19,8 @@ public interface ProjectService {
 
     List<ProjectMember> findMembersByProjectId(Integer projectId);
 
+    List<ProjectMember> findExecutorsByProjectId(Integer projectId);
+
     Optional<Project> findById(Integer id);
 
     List<ProjectStage> findStagesByProjectId(Integer projectId);

@@ -33,6 +33,19 @@
                    th:href="@{/projects/{id}/tasks/new(id=${project.id})}">
                     Создать задачу
                 </a>
+
+                <a class="btn btn-outline-primary"
+                   th:if="${canCreateRequest}"
+                   th:href="@{/projects/{id}/requests/new(id=${project.id})}">
+                    Создать заявку
+                </a>
+
+                <a class="btn btn-outline-secondary"
+                   th:if="${canCreateRequest || canManageRequests}"
+                   th:href="@{/projects/{id}/requests(id=${project.id})}">
+                    Заявки проекта
+                </a>
+
             </div>
         </div>
     </div>

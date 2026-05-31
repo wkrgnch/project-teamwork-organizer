@@ -323,6 +323,14 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
+    public List<ProjectMember> findExecutorsByProjectId(Integer projectId) {
+        return projectMemberRepository.findMembersByProjectIdAndRoleType(
+                projectId,
+                RoleType.WORK_EXECUTOR
+        );
+    }
+
+    @Override
     @Transactional
     public void changeProjectStatus(Integer projectId,
                                     ProjectStatusType status,

@@ -10,6 +10,7 @@ import ru.viktoria.projectteamworkorganizer.entity.id.ProjectMemberId;
 import java.util.List;
 
 public interface ProjectMemberRepository extends JpaRepository<ProjectMember, ProjectMemberId> {
+
     @Query("""
             select distinct pm from ProjectMember pm
             join fetch pm.user
@@ -37,4 +38,17 @@ public interface ProjectMemberRepository extends JpaRepository<ProjectMember, Pr
             """)
     long countProjectMember(@Param("projectId") Integer projectId,
                             @Param("username") String username);
+
+
+    @Query("""
+            select distinct member from ProjectMember member
+            join fetch member.user user
+            join member.roles role
+            where member.project.id = :projectId
+              and role.type = :roleType
+              and (user.deleted = false or user.deleted is null)
+            order by user.fullName
+            """)
+    List<ProjectMember> findMembersByProjectIdAndRoleType(@Param("projectId") Integer projectId,
+                                                          @Param("roleType") RoleType roleType);
 }

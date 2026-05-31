@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Заявки проекта</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<main class="container py-4">
+    <div class="page-card mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <h1 class="page-title mb-1">Заявки проекта</h1>
+                <p class="text-muted mb-0">
+                    Проект:
+                    <strong th:text="${project.name}">Название проекта</strong>
+                </p>
+            </div>
+
+            <div class="d-flex gap-2">
+                <a class="btn btn-primary"
+                   th:if="${canCreateRequest}"
+                   th:href="@{/projects/{projectId}/requests/new(projectId=${project.id})}">
+                    Создать заявку
+                </a>
+
+                <a class="btn btn-outline-secondary"
+                   th:href="@{/projects/{id}(id=${project.id})}">
+                    Назад к проекту
+                </a>
+            </div>
+        </div>
+
+        <div th:if="${requests.isEmpty()}" class="alert alert-info mb-0">
+            Заявок пока нет.
+        </div>
+
+        <div class="table-responsive" th:if="${!requests.isEmpty()}">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                <tr>
+                    <th>Название</th>
+                    <th th:if="${canManageRequests}">Инициатор</th>
+                    <th>Статус</th>
+                    <th>Желаемый срок</th>
+                    <th>Создана</th>
+                    <th class="text-end">Действия</th>
+                </tr>
+                </thead>
+
+                <tbody>
+                <tr th:each="request : ${requests}">
+                    <td class="fw-semibold" th:text="${request.title}">Название заявки</td>
+
+                    <td th:if="${canManageRequests}"
+                        th:text="${request.author != null ? request.author.fullName : 'Пользователь удалён'}">
+                        Автор
+                    </td>
+
+                    <td>
+                        <span class="badge text-bg-secondary"
+                              th:text="${requestStatusLabels.get(request.status)}">
+                            Новая
+                        </span>
+                    </td>
+
+                    <td th:text="${request.desiredDeadline != null ? #temporals.format(request.desiredDeadline, 'dd.MM.yyyy') : 'Не указан'}">
+                        Не указан
+                    </td>
+
+                    <td th:text="${#temporals.format(request.createdAt, 'dd.MM.yyyy HH:mm')}">
+                        01.06.2026
+                    </td>
+
+                    <td class="text-end">
+                        <a class="btn btn-sm btn-outline-primary"
+                           th:href="@{/requests/{id}(id=${request.id})}">
+                            Открыть
+                        </a>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+
+</body>
+</html>

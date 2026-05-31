@@ -18,6 +18,10 @@ public class ProjectRequest {
     private Integer id;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "project_id")
+    private Project project;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "author_id")
     private User author;
 
@@ -59,6 +63,14 @@ public class ProjectRequest {
 
     public void setId(Integer id) {
         this.id = id;
+    }
+
+    public Project getProject() {
+        return project;
+    }
+
+    public void setProject(Project project) {
+        this.project = project;
     }
 
     public User getAuthor() {

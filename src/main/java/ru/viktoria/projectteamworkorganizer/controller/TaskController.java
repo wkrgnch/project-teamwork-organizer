@@ -11,10 +11,12 @@ import ru.viktoria.projectteamworkorganizer.dto.TaskCommentCreateDto;
 import ru.viktoria.projectteamworkorganizer.dto.TaskCreateDto;
 import ru.viktoria.projectteamworkorganizer.dto.TaskResultDto;
 import ru.viktoria.projectteamworkorganizer.entity.Project;
+import ru.viktoria.projectteamworkorganizer.entity.ProjectRequest;
 import ru.viktoria.projectteamworkorganizer.entity.Task;
 import ru.viktoria.projectteamworkorganizer.entity.enums.TaskCommentType;
 import ru.viktoria.projectteamworkorganizer.entity.enums.TaskPriorityType;
 import ru.viktoria.projectteamworkorganizer.entity.enums.TaskStatusType;
+import ru.viktoria.projectteamworkorganizer.service.ProjectRequestService;
 import ru.viktoria.projectteamworkorganizer.service.ProjectService;
 import ru.viktoria.projectteamworkorganizer.service.TaskCommentService;
 import ru.viktoria.projectteamworkorganizer.service.TaskService;
@@ -32,19 +34,23 @@ public class TaskController {
     private final ProjectService projectService;
     private final WorkTypeService workTypeService;
     private final TaskCommentService taskCommentService;
+    private final ProjectRequestService projectRequestService;
 
     public TaskController(TaskService taskService,
                           ProjectService projectService,
                           WorkTypeService workTypeService,
-                          TaskCommentService taskCommentService) {
+                          TaskCommentService taskCommentService,
+                          ProjectRequestService projectRequestService) {
         this.taskService = taskService;
         this.projectService = projectService;
         this.workTypeService = workTypeService;
         this.taskCommentService = taskCommentService;
+        this.projectRequestService = projectRequestService;
     }
 
     @GetMapping("/projects/{projectId}/tasks/new")
     public String showCreateTaskForm(@PathVariable Integer projectId,
+                                     @RequestParam(value = "requestId", required = false) Integer requestId,
                                      Model model,
                                      Principal principal) {
         Optional<Project> projectOptional = projectService.findById(projectId);
@@ -59,13 +65,23 @@ public class TaskController {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Нет доступа");
         }
 
-        model.addAttribute("project", project);
-        model.addAttribute("taskForm", new TaskCreateDto());
-        model.addAttribute("stages", projectService.findStagesByProjectId(projectId));
-        model.addAttribute("sprints", projectService.findSprintsByProjectId(projectId));
-        model.addAttribute("members", projectService.findMembersByProjectId(projectId));
-        model.addAttribute("workTypes", workTypeService.findAll());
-        model.addAttribute("priorities", TaskPriorityType.values());
+        TaskCreateDto taskForm = new TaskCreateDto();
+
+        if (requestId != null) {
+            ProjectRequest request = projectRequestService.findVisibleRequest(requestId, principal.getName())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Заявка не найдена"));
+
+            if (!request.getProject().getId().equals(projectId)) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Заявка не относится к этому проекту");
+            }
+
+            taskForm.setRequestId(request.getId());
+            taskForm.setTitle(request.getTitle());
+            taskForm.setDescription(buildDescriptionFromRequest(request));
+            taskForm.setDeadline(request.getDesiredDeadline());
+        }
+
+        fillTaskFormModel(model, project, taskForm);
 
         return "task-form";
     }
@@ -89,24 +105,14 @@ public class TaskController {
         }
 
         if (bindingResult.hasErrors()) {
-            model.addAttribute("project", project);
-            model.addAttribute("stages", projectService.findStagesByProjectId(projectId));
-            model.addAttribute("sprints", projectService.findSprintsByProjectId(projectId));
-            model.addAttribute("members", projectService.findMembersByProjectId(projectId));
-            model.addAttribute("workTypes", workTypeService.findAll());
-            model.addAttribute("priorities", TaskPriorityType.values());
+            fillTaskFormModel(model, project, taskForm);
             return "task-form";
         }
 
         try {
             taskService.createTask(projectId, taskForm, principal.getName());
         } catch (IllegalStateException exception) {
-            model.addAttribute("project", project);
-            model.addAttribute("stages", projectService.findStagesByProjectId(projectId));
-            model.addAttribute("sprints", projectService.findSprintsByProjectId(projectId));
-            model.addAttribute("members", projectService.findMembersByProjectId(projectId));
-            model.addAttribute("workTypes", workTypeService.findAll());
-            model.addAttribute("priorities", TaskPriorityType.values());
+            fillTaskFormModel(model, project, taskForm);
             model.addAttribute("errorMessage", exception.getMessage());
             return "task-form";
         }
@@ -211,6 +217,34 @@ public class TaskController {
         }
 
         return "redirect:/projects/" + projectId + "/board";
+    }
+
+    private void fillTaskFormModel(Model model, Project project, TaskCreateDto taskForm) {
+        model.addAttribute("project", project);
+        model.addAttribute("taskForm", taskForm);
+        model.addAttribute("stages", projectService.findStagesByProjectId(project.getId()));
+        model.addAttribute("sprints", projectService.findSprintsByProjectId(project.getId()));
+        model.addAttribute("executors", projectService.findExecutorsByProjectId(project.getId()));
+        model.addAttribute("workTypes", workTypeService.findAll());
+        model.addAttribute("priorities", TaskPriorityType.values());
+    }
+
+    private String buildDescriptionFromRequest(ProjectRequest request) {
+        StringBuilder description = new StringBuilder();
+
+        description.append(request.getDescription());
+
+        if (request.getGoal() != null && !request.getGoal().isBlank()) {
+            description.append("\n\nЦель заявки: ").append(request.getGoal());
+        }
+
+        description.append("\n\nОжидаемый результат: ").append(request.getExpectedResult());
+
+        if (request.getMaterialUrl() != null && !request.getMaterialUrl().isBlank()) {
+            description.append("\n\nМатериалы: ").append(request.getMaterialUrl());
+        }
+
+        return description.toString();
     }
 
     private Task getTaskForCurrentUser(Integer taskId, String currentUsername) {

@@ -40,6 +40,9 @@ public class SecurityConfig {
                 .requestMatchers("/tasks/**")
                 .access((authentication, context) -> authenticatedNotGlobalAdmin(authentication))
 
+                .requestMatchers("/requests/**")
+                .access((authentication, context) -> authenticatedNotGlobalAdmin(authentication))
+
                 .anyRequest().authenticated()
         );
     }
