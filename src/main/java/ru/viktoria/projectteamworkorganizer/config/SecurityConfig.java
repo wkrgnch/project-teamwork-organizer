@@ -24,7 +24,27 @@ public class SecurityConfig {
         return http.build();
     }
 
-    private AuthorizationDecision authenticatedNotGlobalAdmin(Supplier<Authentication> authenticationSupplier) {
+    private void configureAuthorization(HttpSecurity http) throws Exception {
+        http.authorizeHttpRequests(auth -> auth
+                .requestMatchers("/", "/public/**", "/login", "/register", "/css/**", "/js/**", "/images/**").permitAll()
+                .requestMatchers("/admin", "/admin/**").hasRole("GLOBAL_ADMIN")
+                .requestMatchers("/logs").hasRole("GLOBAL_ADMIN")
+                .requestMatchers("/work-types", "/work-types/**").hasRole("GLOBAL_ADMIN")
+
+                .requestMatchers(HttpMethod.GET, "/projects", "/projects/**")
+                .access((authentication, context) -> authenticatedNotGlobalAdmin(authentication))
+
+                .requestMatchers(HttpMethod.POST, "/projects", "/projects/**")
+                .access((authentication, context) -> authenticatedNotGlobalAdmin(authentication))
+
+                .requestMatchers("/tasks/**")
+                .access((authentication, context) -> authenticatedNotGlobalAdmin(authentication))
+
+                .anyRequest().authenticated()
+        );
+    }
+
+    private AuthorizationDecision authenticatedNotGlobalAdmin(Supplier<? extends Authentication> authenticationSupplier) {
         Authentication authentication = authenticationSupplier.get();
 
         if (authentication == null || !authentication.isAuthenticated()) {
@@ -45,27 +65,6 @@ public class SecurityConfig {
 
         return new AuthorizationDecision(!globalAdmin);
     }
-
-    private void configureAuthorization(HttpSecurity http) throws Exception {
-        http.authorizeHttpRequests(auth -> auth
-                .requestMatchers("/login", "/register", "/css/**", "/js/**", "/images/**").permitAll()
-                .requestMatchers("/admin", "/admin/**").hasRole("GLOBAL_ADMIN")
-                .requestMatchers("/logs").hasRole("GLOBAL_ADMIN")
-                .requestMatchers("/work-types", "/work-types/**").hasRole("GLOBAL_ADMIN")
-
-                .requestMatchers(HttpMethod.GET, "/projects", "/projects/**")
-                .access((authentication, context) -> authenticatedNotGlobalAdmin((Supplier<Authentication>) authentication))
-
-                .requestMatchers(HttpMethod.POST, "/projects", "/projects/**")
-                .access((authentication, context) -> authenticatedNotGlobalAdmin((Supplier<Authentication>) authentication))
-
-                .requestMatchers("/tasks/**")
-                .access((authentication, context) -> authenticatedNotGlobalAdmin((Supplier<Authentication>) authentication))
-
-                .anyRequest().authenticated()
-        );
-    }
-
 
     private void configureLogin(HttpSecurity http) throws Exception {
         http.formLogin(form -> form

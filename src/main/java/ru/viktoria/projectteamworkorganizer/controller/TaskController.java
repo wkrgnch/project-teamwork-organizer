@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import ru.viktoria.projectteamworkorganizer.dto.TaskCommentCreateDto;
 import ru.viktoria.projectteamworkorganizer.dto.TaskCreateDto;
+import ru.viktoria.projectteamworkorganizer.dto.TaskResultDto;
 import ru.viktoria.projectteamworkorganizer.entity.Project;
 import ru.viktoria.projectteamworkorganizer.entity.Task;
 import ru.viktoria.projectteamworkorganizer.entity.enums.TaskCommentType;
@@ -119,9 +120,58 @@ public class TaskController {
                                   Principal principal) {
         Task task = getTaskForCurrentUser(taskId, principal.getName());
 
-        fillTaskDetailsModel(model, task, new TaskCommentCreateDto());
+        fillTaskDetailsModel(model, task, new TaskCommentCreateDto(), new TaskResultDto(), principal.getName());
 
         return "task-details";
+    }
+
+    @PostMapping("/tasks/{taskId}/take")
+    public String takeTask(@PathVariable Integer taskId,
+                           Principal principal) {
+        try {
+            taskService.takeTask(taskId, principal.getName());
+        } catch (IllegalStateException exception) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, exception.getMessage());
+        }
+
+        return "redirect:/tasks/" + taskId;
+    }
+
+    @PostMapping("/tasks/{taskId}/submit-result")
+    public String submitResult(@PathVariable Integer taskId,
+                               @Valid @ModelAttribute("resultForm") TaskResultDto resultForm,
+                               BindingResult bindingResult,
+                               Model model,
+                               Principal principal) {
+        Task task = getTaskForCurrentUser(taskId, principal.getName());
+
+        if (bindingResult.hasErrors()) {
+            fillTaskDetailsModel(model, task, new TaskCommentCreateDto(), resultForm, principal.getName());
+            return "task-details";
+        }
+
+        try {
+            taskService.submitResult(taskId, resultForm, principal.getName());
+        } catch (IllegalStateException exception) {
+            fillTaskDetailsModel(model, task, new TaskCommentCreateDto(), resultForm, principal.getName());
+            model.addAttribute("errorMessage", exception.getMessage());
+            return "task-details";
+        }
+
+        return "redirect:/tasks/" + taskId;
+    }
+
+    @PostMapping("/tasks/{taskId}/review")
+    public String reviewTask(@PathVariable Integer taskId,
+                             @RequestParam("status") TaskStatusType status,
+                             Principal principal) {
+        try {
+            taskService.reviewTask(taskId, status, principal.getName());
+        } catch (IllegalStateException exception) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, exception.getMessage());
+        }
+
+        return "redirect:/tasks/" + taskId;
     }
 
     @PostMapping("/tasks/{taskId}/comments")
@@ -133,14 +183,14 @@ public class TaskController {
         Task task = getTaskForCurrentUser(taskId, principal.getName());
 
         if (bindingResult.hasErrors()) {
-            fillTaskDetailsModel(model, task, commentForm);
+            fillTaskDetailsModel(model, task, commentForm, new TaskResultDto(), principal.getName());
             return "task-details";
         }
 
         try {
             taskCommentService.addComment(taskId, commentForm, principal.getName());
         } catch (IllegalStateException exception) {
-            fillTaskDetailsModel(model, task, commentForm);
+            fillTaskDetailsModel(model, task, commentForm, new TaskResultDto(), principal.getName());
             model.addAttribute("errorMessage", exception.getMessage());
             return "task-details";
         }
@@ -182,13 +232,19 @@ public class TaskController {
 
     private void fillTaskDetailsModel(Model model,
                                       Task task,
-                                      TaskCommentCreateDto commentForm) {
+                                      TaskCommentCreateDto commentForm,
+                                      TaskResultDto resultForm,
+                                      String currentUsername) {
         model.addAttribute("task", task);
         model.addAttribute("comments", taskCommentService.findCommentsByTaskId(task.getId()));
         model.addAttribute("commentForm", commentForm);
+        model.addAttribute("resultForm", resultForm);
         model.addAttribute("commentTypes", TaskCommentType.values());
         model.addAttribute("taskStatusLabels", getTaskStatusLabels());
         model.addAttribute("commentTypeLabels", getCommentTypeLabels());
+        model.addAttribute("canTakeTask", taskService.canTakeTask(task, currentUsername));
+        model.addAttribute("canSubmitResult", taskService.canSubmitResult(task, currentUsername));
+        model.addAttribute("canReviewTask", taskService.canReviewTask(task, currentUsername));
     }
 
     private Map<TaskStatusType, String> getTaskStatusLabels() {

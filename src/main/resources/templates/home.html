@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Project Teamwork Organizer</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container">
+        <a class="navbar-brand fw-bold" th:href="@{/}">
+            Project Teamwork Organizer
+        </a>
+
+        <div class="d-flex gap-2">
+            <a class="btn btn-outline-light btn-sm" th:href="@{/public/projects}">
+                Публичные проекты
+            </a>
+            <a class="btn btn-outline-light btn-sm" th:href="@{/login}">
+                Войти
+            </a>
+            <a class="btn btn-primary btn-sm" th:href="@{/register}">
+                Зарегистрироваться
+            </a>
+        </div>
+    </div>
+</nav>
+
+<main class="container py-4">
+
+    <div class="page-card mb-4">
+        <div class="row align-items-center g-4">
+            <div class="col-lg-7">
+                <h1 class="page-title mb-3">
+                    Сервис для организации командной проектной работы
+                </h1>
+
+                <p class="lead mb-3">
+                    Project Teamwork Organizer помогает планировать проекты, распределять роли участников,
+                    создавать задачи и отслеживать ход выполнения работ.
+                </p>
+
+                <p class="text-muted mb-4">
+                    Сервис подходит для учебных, командных и организационных проектов, где важно видеть,
+                    кто участвует в работе, какие задачи назначены исполнителям, на каком этапе находится проект
+                    и какие задачи уже выполнены.
+                </p>
+
+                <div class="d-flex gap-2 flex-wrap">
+                    <a class="btn btn-primary" th:href="@{/public/projects}">
+                        Смотреть публичные проекты
+                    </a>
+
+                    <a class="btn btn-outline-secondary" th:href="@{/login}">
+                        Войти в систему
+                    </a>
+
+                    <a class="btn btn-outline-primary" th:href="@{/register}">
+                        Создать аккаунт
+                    </a>
+                </div>
+            </div>
+
+            <div class="col-lg-5">
+                <div class="border rounded-4 p-4 bg-light">
+                    <h2 class="h5 mb-3">Что можно делать в системе?</h2>
+
+                    <ul class="mb-0">
+                        <li class="mb-2">создавать проекты по Scrum или Kanban;</li>
+                        <li class="mb-2">добавлять участников и назначать им роли;</li>
+                        <li class="mb-2">создавать задачи и назначать исполнителей;</li>
+                        <li class="mb-2">отслеживать задачи на доске по статусам;</li>
+                        <li class="mb-2">создавать спринты для Scrum-проектов;</li>
+                        <li>оставлять комментарии и фиксировать действия пользователей.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="page-card h-100">
+                <h2 class="h5 mb-2">Удобное планирование</h2>
+                <p class="text-muted mb-0">
+                    Проект разделяется на этапы, а задачи отображаются на доске по текущему состоянию:
+                    новые, в работе, на проверке, на доработке и завершённые.
+                </p>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="page-card h-100">
+                <h2 class="h5 mb-2">Разные роли участников</h2>
+                <p class="text-muted mb-0">
+                    В проекте можно назначать администратора проекта, исполнителей, контролирующих участников
+                    и инициаторов заявок. Это помогает разграничить ответственность.
+                </p>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="page-card h-100">
+                <h2 class="h5 mb-2">Публичные проекты</h2>
+                <p class="text-muted mb-0">
+                    Часть проектов может быть опубликована для просмотра без регистрации.
+                    Посетители видят только общую информацию, без внутренних задач и участников.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="page-card">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <h2 class="h4 mb-1">Публичные проекты</h2>
+                <p class="text-muted mb-0">
+                    Здесь отображаются проекты, которые открыты для просмотра посетителям системы.
+                </p>
+            </div>
+
+            <a class="btn btn-outline-primary btn-sm" th:href="@{/public/projects}">
+                Все публичные проекты
+            </a>
+        </div>
+
+        <div th:if="${publicProjects.isEmpty()}" class="alert alert-info">
+            Публичные проекты пока не опубликованы.
+        </div>
+
+        <div class="row g-3" th:if="${!publicProjects.isEmpty()}">
+            <div class="col-md-6 col-lg-4" th:each="project : ${publicProjects}">
+                <div class="border rounded-4 p-3 h-100 bg-white">
+                    <h3 class="h5" th:text="${project.name}">Название проекта</h3>
+
+                    <p class="text-muted small mb-2"
+                       th:text="${project.publicDescription != null && !project.publicDescription.isBlank() ? project.publicDescription : project.description}">
+                        Описание проекта
+                    </p>
+
+                    <div class="mb-3">
+                        <span class="badge text-bg-secondary" th:text="${project.methodology}">KANBAN</span>
+                        <span class="badge text-bg-light border" th:text="${project.status}">ACTIVE</span>
+                    </div>
+
+                    <a class="btn btn-sm btn-outline-primary"
+                       th:href="@{/public/projects/{id}(id=${project.id})}">
+                        Открыть
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+</body>
+</html>

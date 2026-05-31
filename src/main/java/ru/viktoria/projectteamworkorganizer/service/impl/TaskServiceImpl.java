@@ -3,6 +3,7 @@ package ru.viktoria.projectteamworkorganizer.service.impl;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.viktoria.projectteamworkorganizer.dto.TaskCreateDto;
+import ru.viktoria.projectteamworkorganizer.dto.TaskResultDto;
 import ru.viktoria.projectteamworkorganizer.entity.*;
 import ru.viktoria.projectteamworkorganizer.entity.enums.ActionObjectType;
 import ru.viktoria.projectteamworkorganizer.entity.enums.RoleType;
@@ -27,7 +28,6 @@ public class TaskServiceImpl implements TaskService {
     private final UserRepository userRepository;
     private final ProjectMemberRepository projectMemberRepository;
     private final UserActionLogService userActionLogService;
-
 
     public TaskServiceImpl(TaskRepository taskRepository,
                            ProjectRepository projectRepository,
@@ -223,19 +223,7 @@ public class TaskServiceImpl implements TaskService {
             throw new IllegalStateException("Нет прав для изменения статуса задачи");
         }
 
-        LocalDateTime now = LocalDateTime.now();
-
-        task.setStatus(newStatus);
-        task.setUpdatedAt(now);
-
-        if (newStatus == TaskStatusType.DONE) {
-            task.setCompletedAt(now);
-        }
-
-        if (newStatus == TaskStatusType.CLOSED) {
-            task.setClosedAt(now);
-        }
-
+        updateTaskStatus(task, newStatus);
         taskRepository.save(task);
 
         userActionLogService.log(
@@ -248,6 +236,163 @@ public class TaskServiceImpl implements TaskService {
         );
 
         return projectId;
+    }
+
+    @Override
+    @Transactional
+    public Integer takeTask(Integer taskId, String currentUsername) {
+        Task task = findTaskOrThrow(taskId);
+
+        if (!canTakeTask(task, currentUsername)) {
+            throw new IllegalStateException("Нет прав для взятия задачи в работу");
+        }
+
+        Optional<User> userOptional = userRepository.findByUsername(currentUsername);
+
+        if (userOptional.isEmpty()) {
+            throw new IllegalStateException("Текущий пользователь не найден");
+        }
+
+        User currentUser = userOptional.get();
+
+        task.setAssignee(currentUser);
+        updateTaskStatus(task, TaskStatusType.IN_PROGRESS);
+        taskRepository.save(task);
+
+        userActionLogService.log(
+                currentUsername,
+                UserActionType.ASSIGN_EXECUTOR,
+                ActionObjectType.TASK,
+                task.getId(),
+                task.getTitle(),
+                "Пользователь взял задачу \"" + task.getTitle() + "\" в работу"
+        );
+
+        return task.getProject().getId();
+    }
+
+    @Override
+    @Transactional
+    public Integer submitResult(Integer taskId,
+                                TaskResultDto taskResultDto,
+                                String currentUsername) {
+        Task task = findTaskOrThrow(taskId);
+
+        if (!canSubmitResult(task, currentUsername)) {
+            throw new IllegalStateException("Нет прав для отправки результата по этой задаче");
+        }
+
+        task.setResultDescription(taskResultDto.getResultDescription().trim());
+
+        if (taskResultDto.getResultUrl() != null && !taskResultDto.getResultUrl().isBlank()) {
+            task.setResultUrl(taskResultDto.getResultUrl().trim());
+        } else {
+            task.setResultUrl(null);
+        }
+
+        updateTaskStatus(task, TaskStatusType.ON_REVIEW);
+        taskRepository.save(task);
+
+        userActionLogService.log(
+                currentUsername,
+                UserActionType.UPDATE_TASK,
+                ActionObjectType.TASK,
+                task.getId(),
+                task.getTitle(),
+                "По задаче \"" + task.getTitle() + "\" отправлен результат на проверку"
+        );
+
+        return task.getProject().getId();
+    }
+
+    @Override
+    @Transactional
+    public Integer reviewTask(Integer taskId,
+                              TaskStatusType newStatus,
+                              String currentUsername) {
+        Task task = findTaskOrThrow(taskId);
+
+        if (!canReviewTask(task, currentUsername)) {
+            throw new IllegalStateException("Нет прав для проверки этой задачи");
+        }
+
+        if (newStatus != TaskStatusType.DONE && newStatus != TaskStatusType.NEEDS_REVISION) {
+            throw new IllegalStateException("Контрольный администратор может принять задачу или вернуть её на доработку");
+        }
+
+        updateTaskStatus(task, newStatus);
+        taskRepository.save(task);
+
+        userActionLogService.log(
+                currentUsername,
+                UserActionType.CHANGE_TASK_STATUS,
+                ActionObjectType.TASK,
+                task.getId(),
+                task.getTitle(),
+                "Контрольный администратор изменил статус задачи на " + newStatus
+        );
+
+        return task.getProject().getId();
+    }
+
+    @Override
+    public boolean canTakeTask(Task task, String currentUsername) {
+        Integer projectId = task.getProject().getId();
+
+        boolean workExecutor = hasProjectRole(projectId, currentUsername, RoleType.WORK_EXECUTOR);
+        boolean taskHasNoExecutor = task.getAssignee() == null;
+        boolean taskIsAvailable = task.getStatus() == TaskStatusType.TO_DO
+                || task.getStatus() == TaskStatusType.NEEDS_REVISION;
+
+        return workExecutor && taskHasNoExecutor && taskIsAvailable;
+    }
+
+    @Override
+    public boolean canSubmitResult(Task task, String currentUsername) {
+        Integer projectId = task.getProject().getId();
+
+        boolean workExecutor = hasProjectRole(projectId, currentUsername, RoleType.WORK_EXECUTOR);
+        boolean assignedToCurrentUser = task.getAssignee() != null
+                && task.getAssignee().getUsername().equals(currentUsername);
+        boolean statusAllowsResult = task.getStatus() == TaskStatusType.IN_PROGRESS
+                || task.getStatus() == TaskStatusType.NEEDS_REVISION;
+
+        return workExecutor && assignedToCurrentUser && statusAllowsResult;
+    }
+
+    @Override
+    public boolean canReviewTask(Task task, String currentUsername) {
+        Integer projectId = task.getProject().getId();
+
+        boolean controlAdmin = hasProjectRole(projectId, currentUsername, RoleType.CONTROL_ADMIN);
+        boolean onReview = task.getStatus() == TaskStatusType.ON_REVIEW;
+
+        return controlAdmin && onReview;
+    }
+
+    private Task findTaskOrThrow(Integer taskId) {
+        Optional<Task> taskOptional = taskRepository.findTaskDetailsById(taskId);
+
+        if (taskOptional.isEmpty()) {
+            throw new IllegalStateException("Задача не найдена");
+        }
+
+        return taskOptional.get();
+    }
+
+    private void updateTaskStatus(Task task, TaskStatusType newStatus) {
+        LocalDateTime now = LocalDateTime.now();
+
+        task.setStatus(newStatus);
+        task.setUpdatedAt(now);
+
+        if (newStatus == TaskStatusType.DONE) {
+            task.setCompletedAt(now);
+        }
+
+        if (newStatus == TaskStatusType.CLOSED) {
+            task.setClosedAt(now);
+        }
     }
 
     private boolean hasProjectRole(Integer projectId, String username, RoleType roleType) {

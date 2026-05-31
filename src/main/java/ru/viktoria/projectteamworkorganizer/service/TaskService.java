@@ -1,6 +1,7 @@
 package ru.viktoria.projectteamworkorganizer.service;
 
 import ru.viktoria.projectteamworkorganizer.dto.TaskCreateDto;
+import ru.viktoria.projectteamworkorganizer.dto.TaskResultDto;
 import ru.viktoria.projectteamworkorganizer.entity.Task;
 import ru.viktoria.projectteamworkorganizer.entity.enums.TaskStatusType;
 
@@ -20,5 +21,15 @@ public interface TaskService {
 
     Map<TaskStatusType, List<Task>> findTasksByBoardStatusForProject(Integer projectId);
 
+    Integer takeTask(Integer taskId, String currentUsername);
 
+    Integer submitResult(Integer taskId, TaskResultDto taskResultDto, String currentUsername);
+
+    Integer reviewTask(Integer taskId, TaskStatusType status, String currentUsername);
+
+    boolean canTakeTask(Task task, String currentUsername);
+
+    boolean canSubmitResult(Task task, String currentUsername);
+
+    boolean canReviewTask(Task task, String currentUsername);
 }

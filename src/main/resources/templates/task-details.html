@@ -136,6 +136,84 @@
     </div>
 
     <div class="page-card mt-4">
+        <h2 class="h4 mb-3">Действия по задаче</h2>
+
+        <div th:if="${canTakeTask}">
+            <p class="text-muted">
+                Задача пока не назначена исполнителю. Вы можете взять её в работу.
+            </p>
+
+            <form th:action="@{/tasks/{taskId}/take(taskId=${task.id})}" method="post">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                <button type="submit" class="btn btn-primary">
+                    Взять задачу в работу
+                </button>
+            </form>
+        </div>
+
+        <div th:if="${canSubmitResult}">
+            <p class="text-muted">
+                Заполните результат выполнения. После отправки задача автоматически перейдёт в статус “На проверке”.
+            </p>
+
+            <form th:action="@{/tasks/{taskId}/submit-result(taskId=${task.id})}"
+                  th:object="${resultForm}"
+                  method="post">
+
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+
+                <div class="mb-3">
+                    <label for="resultDescription" class="form-label">Описание результата</label>
+                    <textarea id="resultDescription" th:field="*{resultDescription}" class="form-control" rows="3"></textarea>
+                    <div class="text-danger small"
+                         th:if="${#fields.hasErrors('resultDescription')}"
+                         th:errors="*{resultDescription}">
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="resultUrl" class="form-label">Ссылка на файл, отчёт или результат</label>
+                    <input id="resultUrl" type="text" th:field="*{resultUrl}" class="form-control"
+                           placeholder="Например: ссылка на Google Drive, GitHub, документ или архив">
+                </div>
+
+                <button type="submit" class="btn btn-primary">
+                    Отправить на проверку
+                </button>
+            </form>
+        </div>
+
+        <div th:if="${canReviewTask}">
+            <p class="text-muted">
+                Задача ожидает проверки. Контрольный администратор может принять результат или вернуть задачу на доработку.
+            </p>
+
+            <div class="d-flex gap-2 flex-wrap">
+                <form th:action="@{/tasks/{taskId}/review(taskId=${task.id})}" method="post">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                    <input type="hidden" name="status" value="DONE">
+                    <button type="submit" class="btn btn-success">
+                        Принять результат
+                    </button>
+                </form>
+
+                <form th:action="@{/tasks/{taskId}/review(taskId=${task.id})}" method="post">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                    <input type="hidden" name="status" value="NEEDS_REVISION">
+                    <button type="submit" class="btn btn-outline-danger">
+                        Вернуть на доработку
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div th:if="${!canTakeTask && !canSubmitResult && !canReviewTask}" class="alert alert-light border mb-0">
+            Для текущей роли нет доступных действий по этой задаче.
+        </div>
+    </div>
+
+
+    <div class="page-card mt-4">
         <h2 class="h4 mb-3">Комментарии</h2>
 
         <div th:if="${comments.isEmpty()}" class="alert alert-info">
